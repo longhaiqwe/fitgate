@@ -4,11 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FitGate 设置</title>
+  <link rel="stylesheet" href="./popup.css">
 </head>
 <body>
-  <div id="popup-app">
-    <h2>FitGate 设置</h2>
+  <header>
+    <div class="brand">
+      <span class="brand-icon">🏋️‍♂️</span>
+      <span class="brand-title">FitGate 防沉迷</span>
+    </div>
+    <div class="status-badge" id="system-status">守护中</div>
+  </header>
+
+  <!-- 今日健身战绩 -->
+  <div class="stats-banner">
+    <div>
+      <div class="stats-title">今日已完成深蹲</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">坚持运动，远离久坐病</div>
+    </div>
+    <div class="stats-value" id="stats-workout-count">0 次</div>
   </div>
+
+  <!-- 时间与动作规则设置 -->
+  <div class="setting-section">
+    <div class="section-label">规则参数设置</div>
+
+    <div class="setting-item">
+      <div class="item-header">
+        <span>连续使用上限</span>
+        <span class="item-val" id="val-usage-limit">20 分钟</span>
+      </div>
+      <input type="range" id="input-usage-limit" min="1" max="60" step="1" value="20">
+    </div>
+
+    <div class="setting-item">
+      <div class="item-header">
+        <span>解锁深蹲目标</span>
+        <span class="item-val" id="val-squat-target">10 次</span>
+      </div>
+      <input type="range" id="input-squat-target" min="3" max="30" step="1" value="10">
+    </div>
+  </div>
+
+  <!-- 受控网站管理 -->
+  <div class="setting-section">
+    <div class="section-label">
+      <span>受控网站域名</span>
+    </div>
+    <div class="domain-tags" id="domain-tags-list"></div>
+    <div class="add-domain-box">
+      <input type="text" id="input-new-domain" placeholder="例如: bilibili.com">
+      <button class="btn-add" id="btn-add-domain">添加</button>
+    </div>
+  </div>
+
+  <!-- 底部快捷动作 -->
+  <div class="actions">
+    <button class="btn-primary" id="btn-open-workout">
+      <span>🚀</span>
+      <span>立即打开健身房测试</span>
+    </button>
+    <div class="toast" id="toast-msg"></div>
+  </div>
+
   <script type="module" src="./popup.js"></script>
 </body>
 </html>
