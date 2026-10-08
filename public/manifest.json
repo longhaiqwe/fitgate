@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "FitGate - 居家办公深蹲防沉迷",
+  "version": "1.0.0",
+  "description": "在 X (Twitter) 等网站超时后锁定网页，必须在摄像头前完成指定数量的深蹲动作才可解锁",
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "FitGate 居家健身",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://x.com/*",
+        "*://*.x.com/*",
+        "*://twitter.com/*",
+        "*://*.twitter.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/workout/workout.html",
+        "assets/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
