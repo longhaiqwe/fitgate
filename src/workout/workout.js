@@ -41,13 +41,33 @@ const SKELETON_PAIRS = [
 ];
 
 /**
- * 启动摄像头与姿态模型
+ * 启动摄像头与姿态模型 (并行管线：设置、摄像头硬件预热与本地 AI 引擎同时并发拉起)
  */
 async function startWorkout() {
   try {
-    // 1. 读取用户设定
-    loadingText.textContent = '正在读取个性化健身设置...';
-    const settings = await getSettings();
+    loadingText.textContent = '正在并行初始化摄像头与 AI 姿态检测引擎...';
+
+    // 1. 三路并发拉起：用户配置、摄像头视频流、本地 MoveNet 模型同时启动
+    const settingsPromise = getSettings();
+    const cameraPromise = navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user'
+      },
+      audio: false
+    });
+    const detectorPromise = initPoseDetector((msg) => {
+      loadingText.textContent = msg;
+    });
+
+    // 并发等待三者全部就绪
+    const [settings, stream] = await Promise.all([
+      settingsPromise,
+      cameraPromise,
+      detectorPromise
+    ]);
+
     const target = settings.squatTarget || 10;
     const strictMode = settings.strictMode !== false;
 
@@ -58,17 +78,6 @@ async function startWorkout() {
 
     targetCountEl.textContent = `/ ${target}`;
     headerTargetBadge.textContent = `目标：深蹲 ${target} 次`;
-
-    // 2. 请求摄像头
-    loadingText.textContent = '正在请求摄像头访问权限...';
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        facingMode: 'user'
-      },
-      audio: false
-    });
 
     videoEl.srcObject = stream;
     await new Promise((resolve) => {
@@ -82,12 +91,7 @@ async function startWorkout() {
     canvasEl.width = videoEl.videoWidth || 1280;
     canvasEl.height = videoEl.videoHeight || 720;
 
-    // 3. 加载 AI 姿态检测模型
-    await initPoseDetector((msg) => {
-      loadingText.textContent = msg;
-    });
-
-    // 4. 隐藏加载层，开启推断循环
+    // 隐藏加载遮罩，直接开启推断循环
     loadingMask.classList.add('hidden');
     isRunning = true;
     requestAnimationFrame(renderLoop);

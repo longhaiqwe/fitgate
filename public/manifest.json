@@ -43,6 +43,8 @@
     {
       "resources": [
         "src/workout/workout.html",
+        "models/*",
+        "icons/*",
         "assets/*"
       ],
       "matches": ["<all_urls>"]
