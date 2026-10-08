@@ -3,12 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FitGate 健身房 - 深蹲解锁</title>
+  <title>FitGate 健身房 - 摄像头深蹲解锁</title>
+  <link rel="stylesheet" href="./workout.css">
 </head>
 <body>
-  <div id="app">
-    <h1>FitGate 健身房</h1>
+  <!-- 顶部状态栏 -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon">🏋️‍♂️</span>
+      <span class="brand-name">FitGate 健身房</span>
+      <span class="badge-target" id="header-target-badge">目标：深蹲 10 次</span>
+    </div>
+    <div class="privacy-badge">
+      <span>🛡️</span>
+      <span>本地 AI 视觉推理 · 摄像头画面绝不上云</span>
+    </div>
+  </header>
+
+  <!-- 主体工作区 -->
+  <main>
+    <!-- 左侧：摄像头与骨骼连线舞台 -->
+    <div class="stage-container">
+      <div class="stage-overlay-tips">
+        <div class="status-pill standing" id="status-pill">等待就绪</div>
+        <div class="status-pill" id="fps-counter">FPS: --</div>
+      </div>
+
+      <!-- 视频源与骨骼渲染画布 -->
+      <video id="webcam" playsinline autoplay muted></video>
+      <canvas id="pose-canvas"></canvas>
+
+      <!-- 初始化与权限加载遮罩 -->
+      <div class="loading-mask" id="loading-mask">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">正在启动摄像头与加载 AI 姿态检测模型...</div>
+      </div>
+    </div>
+
+    <!-- 右侧：数据仪表盘 -->
+    <div class="dashboard-container">
+      <!-- 计数大卡片 -->
+      <div class="dashboard-card counter-card">
+        <div class="counter-label">已完成深蹲次数</div>
+        <div class="counter-value-box">
+          <span class="counter-current" id="squat-current-count">0</span>
+          <span class="counter-target" id="squat-target-count">/ 10</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- 实时动作角度与反馈卡片 -->
+      <div class="dashboard-card angle-card">
+        <div class="angle-row">
+          <span class="angle-label">膝关节夹角</span>
+          <span class="angle-value" id="current-angle-text">180°</span>
+        </div>
+        <div class="angle-row">
+          <span class="angle-label">达标有效深度</span>
+          <span class="angle-label" style="color: var(--accent-green); font-weight: 700;">≤ 100°</span>
+        </div>
+
+        <div class="feedback-bubble">
+          <span class="icon" id="feedback-icon">💡</span>
+          <span id="feedback-text">站在镜头前，后退至全身或双腿可见位置</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 胜利通关模态层 -->
+  <div class="victory-modal" id="victory-modal">
+    <div class="victory-box">
+      <div class="victory-icon">🎉</div>
+      <h2 class="victory-title">深蹲目标达成！</h2>
+      <p class="victory-desc">太棒了！已解除网页锁定，正在带你返回浏览器...</p>
+      <div class="badge-target" style="display: inline-block;">即将自动关闭本页</div>
+    </div>
   </div>
+
   <script type="module" src="./workout.js"></script>
 </body>
 </html>

@@ -1,0 +1,379 @@
+/* FitGate 独立全屏健身房界面样式 */
+
+:root {
+  --bg-dark: #0a0e1a;
+  --bg-card: rgba(20, 27, 45, 0.85);
+  --accent-orange: #ff6b4a;
+  --accent-green: #30d158;
+  --accent-blue: #0a84ff;
+  --accent-yellow: #ffd60a;
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 顶部状态栏 */
+header {
+  height: 64px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(10, 14, 26, 0.7);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  font-size: 26px;
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ff6b4a, #ff9f0a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge-target {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 107, 74, 0.15);
+  color: #ff9f0a;
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+.privacy-badge {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 主健身区：左右两栏布局 */
+main {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  padding: 24px 32px;
+  height: calc(100vh - 64px);
+}
+
+/* 左侧：视频与 Canvas 舞台 */
+.stage-container {
+  flex: 1.5;
+  background: #000000;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+video#webcam {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* 镜像翻转 */
+  opacity: 0.85;
+}
+
+canvas#pose-canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* 镜像与视频保持一致 */
+  pointer-events: none;
+}
+
+/* 舞台内悬浮提示 */
+.stage-overlay-tips {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.status-pill {
+  padding: 8px 18px;
+  background: rgba(10, 14, 26, 0.75);
+  backdrop-filter: blur(8px);
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.status-pill.standing {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.status-pill.squatting {
+  border-color: var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+
+.status-pill.bottom {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.4);
+}
+
+/* 右侧：动作数据仪表板 */
+.dashboard-container {
+  flex: 1;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+}
+
+/* 计数展示大卡片 */
+.counter-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.counter-label {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.counter-value-box {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.counter-current {
+  font-size: 80px;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffffff 40%, var(--accent-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.counter-current.bump {
+  transform: scale(1.2);
+}
+
+.counter-target {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* 进度条 */
+.progress-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff6b4a, #30d158);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* 实时角度与指导卡片 */
+.angle-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.angle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.angle-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.angle-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-yellow);
+  font-variant-numeric: tabular-nums;
+}
+
+.angle-value.reached {
+  color: var(--accent-green);
+}
+
+.feedback-bubble {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.feedback-bubble .icon {
+  font-size: 22px;
+}
+
+/* 加载遮罩与权限提示 */
+.loading-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 20;
+  transition: opacity 0.4s ease;
+}
+
+.loading-mask.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent-orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* 胜利通关模态层 */
+.victory-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.victory-modal.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.victory-box {
+  background: linear-gradient(145deg, #1e2846, #141c30);
+  border: 2px solid var(--accent-green);
+  border-radius: 32px;
+  padding: 48px;
+  text-align: center;
+  box-shadow: 0 0 80px rgba(48, 209, 88, 0.4);
+  animation: victoryPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes victoryPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.victory-icon {
+  font-size: 72px;
+  margin-bottom: 16px;
+}
+
+.victory-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.victory-desc {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
