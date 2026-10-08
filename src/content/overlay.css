@@ -1,0 +1,141 @@
+/* FitGate 锁屏遮罩层样式 - 隔离在 Shadow DOM 内部 */
+
+:host {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.fitgate-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483647;
+  background: rgba(10, 15, 29, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.fitgate-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.fitgate-card {
+  max-width: 520px;
+  width: 90%;
+  background: rgba(26, 32, 53, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7),
+              0 0 40px rgba(255, 107, 74, 0.2);
+  animation: fitgatePop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fitgatePop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.fitgate-icon-badge {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #ff6b4a 0%, #ff3b30 100%);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  box-shadow: 0 10px 25px rgba(255, 107, 74, 0.4);
+}
+
+.fitgate-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+
+.fitgate-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 24px;
+}
+
+.fitgate-target-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.fitgate-target-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fitgate-target-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.fitgate-target-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ff9f0a;
+}
+
+.fitgate-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff6b4a 0%, #ff3b30 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(255, 59, 48, 0.35);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.fitgate-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(255, 59, 48, 0.45);
+  filter: brightness(1.08);
+}
+
+.fitgate-btn-primary:active {
+  transform: translateY(0);
+}
+
+.fitgate-footer-hint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 18px;
+}
