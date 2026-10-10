@@ -39,12 +39,12 @@ npm run build
 - **解锁深蹲目标**：深蹲模式下的单组要求次数（次）；
 - **单侧拉伸目标**：拉伸动作单侧或单次保持的目标时长（秒）。
 
-![规则参数设置](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010162948281.png)
+![规则参数设置](docs/images/01_rules_settings.png)
 
 #### (2) 受控目标网站设置
 在目标网站列表中勾选需要纳入时间统计的站点（如 X、Bilibili、YouTube、微博等）。若需要控制其他网站，勾选“其他网站”并在文本框中按行填入域名（如 `example.com`）。
 
-![受控目标网站设置](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010163030699.png)
+![受控目标网站设置](docs/images/02_target_sites.png)
 
 ---
 
@@ -58,7 +58,7 @@ npm run build
 
 在“解锁动作”下拉栏中，默认设置为“智能轮换”，系统将在当前场景的动作库中依次调度动作；也可以手动指定某一个固定动作。
 
-![场景切换与主界面](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/image-20261010152339020.png)
+![场景切换与主界面](docs/images/03_scenario_select.png)
 
 ---
 
@@ -72,7 +72,7 @@ npm run build
 - **进入伴练**：打开独立伴练标签页，开始进行动作；
 - **稍后提醒（推迟 5 分钟）**：临时关闭提示层，将锁定状态后延 5 分钟。
 
-![页面锁定提示](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010163243044.png)
+![页面锁定提示](docs/images/04_lock_overlay.png)
 
 ---
 
@@ -82,7 +82,7 @@ npm run build
 
 界面左侧显示当前动作的名称、分步说明、正确姿态要点与安全停止准则；右侧为动作交互区域，提供两种运行模式：
 
-![伴练页面](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010162827639.png)
+![伴练页面](docs/images/05_workout_room.png)
 
 #### 模式 A：摄像头 AI 检测模式（默认）
 使用本地 TensorFlow.js MoveNet 模型实时推算人体 17 个关键骨骼点。所有画面运算均在浏览器本地内存中完成，图像数据不离开本机设备。
@@ -92,12 +92,12 @@ npm run build
 
 | 动作未到位（蓝色） | 动作到位（绿色） |
 | :---: | :---: |
-| ![动作未到位](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010152958679.png) | ![动作到位](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010153303429.png) |
+| ![动作未到位](docs/images/06_pose_not_ready.png) | ![动作到位](docs/images/07_pose_ready.png) |
 
 #### 模式 B：无摄像头纯计时模式
 若设备未配备摄像头，或当前环境不便调用摄像头，可在伴练页右上角将检测模式切换为“无摄像头纯计时模式”。该模式下系统提供节奏音效与倒计时推进，由使用者自主对照左侧图文完成动作。
 
-![无摄像头计时模式](https://longhaixueai-1258687935.cos.ap-guangzhou.myqcloud.com/img/20261010153356968.png)
+![无摄像头计时模式](docs/images/08_timer_mode.png)
 
 ---
 
