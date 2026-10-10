@@ -1,3 +1,7 @@
 ref-cat-gatekeeper/
 node_modules/
 dist/
+.DS_Store
+Thumbs.db
+.claude/
+punk-assets/

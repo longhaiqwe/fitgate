@@ -8,6 +8,43 @@ export const SQUAT_STATES = Object.freeze({
   RISING: 'RISING'          // 回升站直中
 });
 
+const TRACKING_FEEDBACK = '请退后一步，确保画面拍到双腿和膝盖';
+const PHASE_FEEDBACK = {
+  [SQUAT_STATES.WAITING]: '请站直身体，开始准备',
+  [SQUAT_STATES.STANDING]: '站立就绪，请下蹲',
+  [SQUAT_STATES.SQUATTING]: '保持平衡，继续向下蹲',
+  [SQUAT_STATES.BOTTOM]: '深度达标！请站起',
+  [SQUAT_STATES.RISING]: '向上发力，站直身体'
+};
+
+/**
+ * 评估单侧下肢关节点的置信度与有效性
+ * 髋(Hip)和膝(Knee)为核心关节；踝(Ankle)在普通 Webcam 环境下支持自适应低阈值容错。
+ */
+function evaluateLeg(hip, knee, ankle) {
+  if (!hip || !knee || !ankle) return { valid: false, score: 0 };
+  if (!Number.isFinite(hip.x) || !Number.isFinite(hip.y) ||
+      !Number.isFinite(knee.x) || !Number.isFinite(knee.y) ||
+      !Number.isFinite(ankle.x) || !Number.isFinite(ankle.y)) {
+    return { valid: false, score: 0 };
+  }
+
+  // 核心关节门槛：髋和膝必须具备基础可信度 (>= 0.25)
+  if (hip.score < 0.25 || knee.score < 0.25) return { valid: false, score: 0 };
+
+  // 脚踝门槛：放宽至 0.15，适应居家办公桌面摄像头对下半身的低置信度
+  if (ankle.score < 0.15) return { valid: false, score: 0 };
+
+  // 肢体几何长度必须大于 0
+  const thighLen = Math.hypot(hip.x - knee.x, hip.y - knee.y);
+  const calfLen = Math.hypot(ankle.x - knee.x, ankle.y - knee.y);
+  if (thighLen === 0 || calfLen === 0) return { valid: false, score: 0 };
+
+  // 加权置信度：髋 35% + 膝 45% + 踝 20%
+  const score = hip.score * 0.35 + knee.score * 0.45 + ankle.score * 0.2;
+  return { valid: true, score };
+}
+
 /**
  * 计算三点构成的平面夹角 (度数 0 ~ 180)
  * @param {{x: number, y: number}} p1 起点 (如 Hip)
@@ -41,13 +78,17 @@ export function calculateAngle(p1, p2, p3) {
 export class SquatCounter {
   constructor(options = {}) {
     this.targetCount = options.targetCount || 10;
-    this.strictMode = options.strictMode !== false; // 默认开启严格判定
+    this.strictMode = Boolean(options.strictMode);
     // 站直角度阈值
     this.standingAngleThreshold = 155;
-    // 触底有效深度阈值 (严格模式 100°，标准模式 105°)
-    this.bottomAngleThreshold = this.strictMode ? 100 : 105;
+    // 触底有效深度阈值：
+    // 外接摄像头挂在电脑屏幕上方俯拍时，2D 图像投影夹角比真实生理角度大 15°~20°。
+    // 适中模式设为 120° (大腿蹲到大致水平即判定达标，保护膝盖且顺畅自然)；严格模式设为 110°。
+    this.bottomAngleThreshold = options.bottomAngleThreshold || (this.strictMode ? 110 : 120);
     // 最短深蹲周期 (秒)，防止剧烈晃动镜头作弊刷分
-    this.minSquatDurationSec = 0.8;
+    this.minSquatDurationSec = options.minSquatDurationSec !== undefined ? options.minSquatDurationSec : 0.8;
+    // 丢帧容错时长 (毫秒)：动作过程中允许短暂停顿或动态模糊，不中断动作
+    this.lossToleranceMs = 1500;
 
     this.reset();
   }
@@ -57,18 +98,21 @@ export class SquatCounter {
     this.state = SQUAT_STATES.WAITING;
     this.hasReachedBottom = false;
     this.squatStartTime = 0;
-    this.currentAngle = 180;
+    this.currentAngle = null;
     this.activeSide = 'left';
+    this.lostSince = null;
+    this.lastFeedback = TRACKING_FEEDBACK;
+    this.notice = '';
+    this.noticeUntil = 0;
   }
 
   /**
    * 传入 MoveNet 单帧 17 个关键点数组
    * keypoints: Array<{ x: number, y: number, score: number, name: string }>
    */
-  update(keypoints) {
+  update(keypoints, nowMs = Date.now()) {
     if (!keypoints || keypoints.length < 17) {
-      this.state = SQUAT_STATES.WAITING;
-      return this.getResult('未检测到人体姿态');
+      return this.handleTrackingLoss(nowMs);
     }
 
     // 关键点映射索引
@@ -82,32 +126,54 @@ export class SquatCounter {
     const leftAnkle = keypoints[15];
     const rightAnkle = keypoints[16];
 
-    // 计算左右两侧的置信度总和，挑选更清晰的一侧
-    const leftConfidence = ((leftHip?.score || 0) + (leftKnee?.score || 0) + (leftAnkle?.score || 0)) / 3;
-    const rightConfidence = ((rightHip?.score || 0) + (rightKnee?.score || 0) + (rightAnkle?.score || 0)) / 3;
+    const leftEval = evaluateLeg(leftHip, leftKnee, leftAnkle);
+    const rightEval = evaluateLeg(rightHip, rightKnee, rightAnkle);
 
-    const minConfidenceThreshold = 0.3;
+    if (!leftEval.valid && !rightEval.valid) {
+      return this.handleTrackingLoss(nowMs);
+    }
+
+    // 短暂丢帧只暂停判定；持续丢失超过 400ms 后必须重新稳定识别
+    if (this.lostSince !== null && nowMs - this.lostSince >= 400) {
+      this.clearTracking();
+    }
+    this.lostSince = null;
+
+    // 左右腿选择策略：优先保留当前侧，除非另一侧置信度明显更优 (+0.15)
+    let useLeft = true;
+    if (this.activeSide === 'left') {
+      useLeft = leftEval.valid && (!rightEval.valid || rightEval.score <= leftEval.score + 0.15);
+    } else {
+      useLeft = !rightEval.valid || (leftEval.valid && leftEval.score > rightEval.score + 0.15);
+    }
 
     let hip, knee, ankle;
-    if (leftConfidence >= rightConfidence && leftConfidence >= minConfidenceThreshold) {
+    if (useLeft) {
       hip = leftHip;
       knee = leftKnee;
       ankle = leftAnkle;
       this.activeSide = 'left';
-    } else if (rightConfidence >= minConfidenceThreshold) {
+    } else {
       hip = rightHip;
       knee = rightKnee;
       ankle = rightAnkle;
       this.activeSide = 'right';
-    } else {
-      this.state = SQUAT_STATES.WAITING;
-      return this.getResult('请退后一步，确保画面拍到双腿和膝盖');
     }
 
     // 计算当前膝关节夹角
     const angle = calculateAngle(hip, knee, ankle);
+
+    // 建立跟踪就绪状态：需连续稳定追踪 300ms 滤除单帧偶发杂音
+    if (!this.trackingReady) {
+      this.validSince ??= nowMs;
+      if (nowMs - this.validSince < 300) {
+        return this.getResult(TRACKING_FEEDBACK);
+      }
+      this.trackingReady = true;
+    }
+
     this.currentAngle = angle;
-    const now = Date.now() / 1000;
+    const now = nowMs / 1000;
 
     let isCountedThisFrame = false;
     let isBottomThisFrame = false;
@@ -117,9 +183,6 @@ export class SquatCounter {
       case SQUAT_STATES.WAITING:
         if (angle >= this.standingAngleThreshold) {
           this.state = SQUAT_STATES.STANDING;
-          feedback = '准备就绪，请开始下蹲';
-        } else {
-          feedback = '请站直身体，开始准备';
         }
         break;
 
@@ -128,9 +191,6 @@ export class SquatCounter {
           this.state = SQUAT_STATES.SQUATTING;
           this.hasReachedBottom = false;
           this.squatStartTime = now;
-          feedback = '保持平衡，继续向下蹲';
-        } else {
-          feedback = '站立就绪，请下蹲';
         }
         break;
 
@@ -139,22 +199,16 @@ export class SquatCounter {
           this.state = SQUAT_STATES.BOTTOM;
           this.hasReachedBottom = true;
           isBottomThisFrame = true;
-          feedback = '深度达标！请站起';
         } else if (angle >= this.standingAngleThreshold) {
           // 未触底就提前站起（半蹲无效）
           this.state = SQUAT_STATES.STANDING;
           feedback = '下蹲幅度不足，未计次';
-        } else {
-          feedback = '继续下压...';
         }
         break;
 
       case SQUAT_STATES.BOTTOM:
         if (angle > this.bottomAngleThreshold + 10) {
           this.state = SQUAT_STATES.RISING;
-          feedback = '向上发力，站直身体';
-        } else {
-          feedback = '深度达标！站起完成动作';
         }
         break;
 
@@ -174,11 +228,17 @@ export class SquatCounter {
           this.state = SQUAT_STATES.STANDING;
         } else if (angle <= this.bottomAngleThreshold) {
           this.state = SQUAT_STATES.BOTTOM;
-        } else {
-          feedback = '继续站起...';
         }
         break;
     }
+
+    // 完成或无效动作的提示保留 1.2 秒；下一次下蹲开始时立即恢复动作指导。
+    if (feedback) {
+      this.notice = feedback;
+      this.noticeUntil = nowMs + 1200;
+    }
+    if (this.state !== SQUAT_STATES.STANDING) this.notice = '';
+    feedback = this.notice && nowMs < this.noticeUntil ? this.notice : PHASE_FEEDBACK[this.state];
 
     return {
       ...this.getResult(feedback),
@@ -189,13 +249,37 @@ export class SquatCounter {
     };
   }
 
+  clearTracking() {
+    this.trackingReady = false;
+    this.validSince = null;
+    this.state = SQUAT_STATES.WAITING;
+    this.hasReachedBottom = false;
+    this.squatStartTime = 0;
+    this.currentAngle = null;
+    this.notice = '';
+    this.noticeUntil = 0;
+  }
+
+  handleTrackingLoss(nowMs) {
+    this.validSince = null;
+    this.lostSince ??= nowMs;
+    if (this.trackingReady && nowMs - this.lostSince < 400) {
+      return this.getResult(this.lastFeedback);
+    }
+    this.clearTracking();
+    return this.getResult(TRACKING_FEEDBACK);
+  }
+
   getResult(feedback) {
+    this.lastFeedback = feedback;
     return {
       state: this.state,
       count: this.count,
       targetCount: this.targetCount,
       currentAngle: this.currentAngle,
       isFinished: this.count >= this.targetCount,
+      isCountedThisFrame: false,
+      isBottomThisFrame: false,
       feedback
     };
   }

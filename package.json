@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "node test/actions-data.test.js && node test/storage-settings.test.js && node test/stretch-runner.test.js && node test/squat-counter.test.js && node test/squat-stability.test.js && node test/target-rules.test.js && node test/pose-evaluator.test.js && node test/jumping-jack-counter.test.js && node test/audio.test.js && node test/keypoint-smoother.test.js && node test/duration-parser.test.js"
   },
   "dependencies": {
     "@tensorflow-models/pose-detection": "^2.1.3",

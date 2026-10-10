@@ -45,6 +45,7 @@
         "src/workout/workout.html",
         "models/*",
         "icons/*",
+        "actions/*",
         "assets/*"
       ],
       "matches": ["<all_urls>"]

@@ -1,0 +1,247 @@
+/* 锁屏熊猫场景（配合 panda-scene.js）
+   所有尺寸以 --W（走路时熊猫的身长）为单位，保证各姿势之间大小一致。
+   各图片的比例系数来自素材本身：
+   - 走路视频 540x540，熊猫占宽 85%、水平中心在 46.9%，脚离底边 7.4%
+   - 爬竹子图 525x820，竹竿中心在 x=226.8；竹竿贴图 71x410（同一缩放） */
+
+.pd-scene {
+  --W: min(48vh, 38vw);
+  --ground: 5vh;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pd-scene img,
+.pd-scene video {
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- 竹子 ---------- */
+.pd-bamboo {
+  position: absolute;
+  top: -4vh;
+  bottom: var(--ground);
+  left: calc(50% - var(--W) * 0.95 - var(--W) * 0.0416);
+  width: calc(var(--W) * 0.0831);
+  background-repeat: repeat-y;
+  background-position: center bottom;
+  background-size: calc(var(--W) * 0.0831) calc(var(--W) * 0.48);
+  filter: drop-shadow(0 6px 14px rgba(15, 23, 42, 0.12));
+}
+
+.pd-leaves {
+  position: absolute;
+  width: calc(var(--W) * 0.6);
+  transform-origin: 0 40%;
+}
+
+.pd-leaves-a {
+  left: 60%;
+  top: 14%;
+  animation: pd-leaf-a 6s ease-in-out infinite;
+}
+
+.pd-leaves-b {
+  right: 60%;
+  top: 34%;
+  transform-origin: 50% 40%;
+  animation: pd-leaf-b 7.5s ease-in-out -3s infinite;
+}
+
+@keyframes pd-leaf-a {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes pd-leaf-b {
+  0%, 100% { transform: scaleX(-1) rotate(-3deg); }
+  50% { transform: scaleX(-1) rotate(3deg); }
+}
+
+/* ---------- 熊猫本体：一个零尺寸锚点，各姿势图都以它为脚下中心 ---------- */
+.pd-actor {
+  position: absolute;
+  left: 50%;
+  bottom: var(--ground);
+  width: 0;
+  height: 0;
+}
+
+.pd-lift,
+.pd-flip {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+
+.pd-layer {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 10px 22px rgba(15, 23, 42, 0.16));
+}
+
+.pd-scene:not([data-pose="walk"]) .pd-walk,
+.pd-scene:not([data-pose="lie"]) .pd-lie,
+.pd-scene:not([data-pose="eat"]) .pd-eat,
+.pd-scene:not([data-pose="climb"]) .pd-climb {
+  pointer-events: none;
+}
+
+.pd-scene[data-pose="walk"] .pd-walk,
+.pd-scene[data-pose="lie"] .pd-lie,
+.pd-scene[data-pose="eat"] .pd-eat,
+.pd-scene[data-pose="climb"] .pd-climb {
+  opacity: 1;
+}
+
+.pd-shadow {
+  position: absolute;
+  left: calc(var(--W) * -0.48);
+  bottom: calc(var(--W) * -0.035);
+  width: calc(var(--W) * 0.96);
+  height: calc(var(--W) * 0.08);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(15, 23, 42, 0.22), rgba(15, 23, 42, 0));
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.pd-scene[data-pose="climb"] .pd-shadow {
+  opacity: 0.35;
+  transform: scaleX(0.45);
+}
+
+/* 走路（沿用原视频） */
+.pd-walk {
+  width: calc(var(--W) * 1.176);
+  height: calc(var(--W) * 1.176);
+  left: calc(var(--W) * -0.552);
+  bottom: calc(var(--W) * -0.087);
+}
+
+/* 趴着打盹：先"噗"地瘫下去，然后慢慢呼吸 */
+.pd-lie {
+  width: calc(var(--W) * 1.05);
+  left: calc(var(--W) * -0.525);
+  bottom: 0;
+  transform-origin: 50% 100%;
+}
+
+.pd-scene[data-pose="lie"] .pd-lie {
+  animation:
+    pd-plop 0.8s cubic-bezier(.3, 1.3, .5, 1) both,
+    pd-breathe 4.2s ease-in-out 0.8s infinite;
+}
+
+@keyframes pd-plop {
+  0% { transform: scale(0.97, 1.08); }
+  45% { transform: scale(1.03, 0.95); }
+  100% { transform: scale(1, 1); }
+}
+
+@keyframes pd-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.008, 1.03); }
+}
+
+.pd-zzz {
+  position: absolute;
+  left: calc(var(--W) * 0.3);
+  bottom: calc(var(--W) * 0.42);
+  color: rgba(71, 85, 105, 0.75);
+  font: italic 600 calc(var(--W) * 0.06) Georgia, "Times New Roman", serif;
+  pointer-events: none;
+}
+
+.pd-zzz span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  opacity: 0;
+}
+
+.pd-zzz span:nth-child(2) { font-size: 1.3em; }
+.pd-zzz span:nth-child(3) { font-size: 1.6em; }
+
+.pd-scene[data-pose="lie"] .pd-zzz span { animation: pd-z 4.5s ease-out 1.2s infinite; }
+.pd-scene[data-pose="lie"] .pd-zzz span:nth-child(2) { animation-delay: 2.7s; }
+.pd-scene[data-pose="lie"] .pd-zzz span:nth-child(3) { animation-delay: 4.2s; }
+
+@keyframes pd-z {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-8deg); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(var(--W) * 0.08), calc(var(--W) * -0.2)) rotate(10deg); }
+}
+
+/* 坐着吃竹叶：两帧之间来回淡入淡出 = 送到嘴边、嚼 */
+.pd-eat {
+  height: calc(var(--W) * 1);
+  width: calc(var(--W) * 0.993);
+  left: calc(var(--W) * -0.5);
+  bottom: 0;
+  transform-origin: 50% 100%;
+}
+
+.pd-eat img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pd-eat-2 {
+  opacity: 0;
+}
+
+.pd-scene[data-pose="eat"] .pd-eat { animation: pd-sit 5s ease-in-out infinite; }
+.pd-scene[data-pose="eat"] .pd-eat-2 { animation: pd-chew 1.9s ease-in-out infinite; }
+
+@keyframes pd-sit {
+  0%, 100% { transform: rotate(-0.6deg) scaleY(1); }
+  50% { transform: rotate(0.6deg) scaleY(1.012); }
+}
+
+@keyframes pd-chew {
+  0%, 35% { opacity: 0; }
+  48%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 抱竹子：图里竹竿被抠掉，正好透出后面那根竹子 */
+.pd-climb {
+  height: calc(var(--W) * 0.96);
+  width: calc(var(--W) * 0.6146);
+  left: calc(var(--W) * -0.2655);
+  bottom: calc(var(--W) * 0.03);
+  transform-origin: calc(var(--W) * 0.2655) 0;
+  filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.14));
+}
+
+.pd-scene[data-pose="climb"][data-climb="up"] .pd-climb { animation: pd-inch 1.5s ease-in-out infinite; }
+.pd-scene[data-pose="climb"][data-climb="hang"] .pd-climb { animation: pd-hang 3.2s ease-in-out infinite; }
+
+@keyframes pd-inch {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  40% { transform: translateY(calc(var(--W) * -0.018)) scaleY(1.02); }
+  70% { transform: translateY(0) scaleY(0.985); }
+}
+
+@keyframes pd-hang {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-scene * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

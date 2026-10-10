@@ -39,6 +39,7 @@ function makeKeypoints(hip, knee, ankle, score = 0.9) {
   counter.minSquatDurationSec = 0;
 
   // 帧 1: 站直 (180°)
+  counter.update(makeKeypoints({ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: 20 }), Date.now() - 300);
   let res = counter.update(makeKeypoints({ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: 20 }));
   assert.strictEqual(res.state, SQUAT_STATES.STANDING, '初始站直应进入 STANDING');
   assert.strictEqual(res.count, 0, '此时计数应为 0');
@@ -70,6 +71,7 @@ function makeKeypoints(hip, knee, ankle, score = 0.9) {
   counter.minSquatDurationSec = 0;
 
   // 站直
+  counter.update(makeKeypoints({ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: 20 }), Date.now() - 300);
   counter.update(makeKeypoints({ x: 0, y: 0 }, { x: 0, y: 10 }, { x: 0, y: 20 }));
 
   // 半蹲到 130° (未达 100° 阈值)

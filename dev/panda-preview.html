@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>熊猫场景预览</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; }
+    body { background: radial-gradient(circle at 50% 45%, #f8fafc 0%, #e2e8f0 100%); }
+    .bar { position: fixed; top: 16px; left: 16px; display: flex; gap: 8px; z-index: 2; }
+    .bar button { padding: 6px 12px; border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- 本地预览锁屏熊猫场景：npx vite 后打开 /dev/panda-preview.html -->
+  <div class="bar"><button id="restart">重新入场</button></div>
+  <script type="module">
+    import { createPandaScene, sceneCss } from '/src/content/panda-scene.js';
+    const style = document.createElement('style');
+    style.textContent = sceneCss;
+    document.head.appendChild(style);
+    const scene = createPandaScene((p) => '/' + p);
+    document.body.appendChild(scene.element);
+    requestAnimationFrame(() => scene.start());
+    document.getElementById('restart').onclick = () => scene.start();
+    window.__scene = scene;
+  </script>
+</body>
+</html>
