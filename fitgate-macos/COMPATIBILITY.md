@@ -13,9 +13,18 @@
 
 ## 运行验证
 
-Apple Silicon 安装包已在 macOS 26.5.2 原生运行通过完整冒烟测试，渲染错误为 0。
+| 验证对象 | 环境 | 结果 |
+| --- | --- | --- |
+| 最终 Intel ZIP 解压后的应用 | Apple Silicon，macOS 26.5.2，通过 Rosetta 运行 x64 | 完整冒烟测试通过，含合成摄像头与离线 MoveNet；渲染错误 0 |
+| 最终 Apple Silicon ZIP 解压后的应用 | Apple Silicon，macOS 26.5.2，原生 arm64 | 完整冒烟测试通过，含合成摄像头与离线 MoveNet；渲染错误 0 |
+| 同源码在 Intel 上原生构建的应用 | GitHub `macos-15-intel`，macOS 15（Darwin 24.6.0） | 90 项测试、打包与核心桌面冒烟测试通过；x64、非 Rosetta；渲染错误 0 |
+| 同源码在 Apple Silicon 上原生构建的应用 | GitHub `macos-15`，macOS 15（Darwin 24.6.0） | 90 项测试、打包与核心桌面冒烟测试通过；arm64、非 Rosetta；渲染错误 0 |
 
-Intel 安装包的 Rosetta 验证和 GitHub 原生 Intel 验证结果将在本次发布前补充。GitHub 工作流使用 macOS 15 的 `macos-15-intel` 与 `macos-15` 两种环境，验证实际运行架构并禁止将 Rosetta 运行误记为原生运行。
+[GitHub 验证记录](https://github.com/longhaiqwe/fitgate/actions/runs/38677122100)。测试源码提交为 `34c5abb65159eb5179444f967d9ea3cd394ded87`；后续发布提交只整理报告与校验值。Release 的 `verification-results.json` 保存本地和 CI 的结构化结果。
+
+CI 的 Intel 虚拟环境无法初始化 GPU，摄像头测试出现 EGL / SharedImage 初始化错误。因此 CI 明确使用核心桌面测试范围，结果包含 `scope: desktop-core`、`cameraModel: false`、`skipped: [cameraModel]`；摄像头和 AI 测试没有被记为云端通过。本地完整测试不跳过摄像头，结果为 `scope: full`、`cameraModel: true`。
+
+验证过程中还修正了显示器模拟测试：系统显示器事件与直接调用使用同一份虚拟屏幕列表，并主动触发一次显示器变化事件作为回归检查，避免虚拟窗口被真实屏幕列表提前清除。应用正式运行的显示器逻辑未改变。
 
 冒烟测试覆盖原生前台应用监测、设置、全屏提醒、预览关闭、显示器增减逻辑、两组计时伴练、暂停与恢复、完成解除遮挡、模拟锁屏恢复、推迟、离线 MoveNet 与合成摄像头初始化。
 
@@ -31,6 +40,6 @@ Intel 安装包的 Rosetta 验证和 GitHub 原生 Intel 验证结果将在本�
 在下载目录运行 `shasum -a 256 -c SHA256SUMS.txt`，可复核两个压缩包。
 
 ```text
-70a57b6f77bd1949b6ceaa4b9e04bdf90726cc836963d9783cfc03a380d1bac6  FitGate-1.1.0-macOS-x64.zip
-79236d89151fe3e488b3e29577270c6e2c7fe592f9fd09730e6c36f7db8409b7  FitGate-1.1.0-macOS-arm64.zip
+c612ce2ebedd14d9819aec2916afd4eca4353a327b5544ef63055344b649102a  FitGate-1.1.0-macOS-x64.zip
+567b0f29277ad8a540988469e64041d2b8af1e3b6f9a168f5e971529091fa011  FitGate-1.1.0-macOS-arm64.zip
 ```

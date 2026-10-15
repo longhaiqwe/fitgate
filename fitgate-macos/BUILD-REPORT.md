@@ -1,5 +1,7 @@
 # 构建与验证记录
 
+> 当前版本 1.1.0 的 Intel / Apple Silicon 验证与下载校验值见 [兼容性记录](COMPATIBILITY.md)。以下保留 1.0.0 的历史构建记录。
+
 - 日期：2026-10-13（Asia/Shanghai）
 - 版本：FitGate 1.0.0，Apple Silicon / arm64
 - 安装位置：`/Applications/FitGate.app`
