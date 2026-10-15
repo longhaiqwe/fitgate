@@ -25,6 +25,7 @@ async function until(check, description, timeout = 20000) {
 export async function runSmoke({ app, engine, getDashboard, getWorkout, getReminders, openWorkout, showReminder, dismissReminders, reconcileReminders, status, root }) {
   if (process.env.FITGATE_EXPECT_ARCH) assert.equal(process.arch, process.env.FITGATE_EXPECT_ARCH, 'packaged app runs the expected architecture');
   const artifacts = process.env.FITGATE_ARTIFACT_DIR || path.join(root, 'artifacts'); fs.mkdirSync(artifacts, { recursive: true });
+  const skipCamera = process.env.FITGATE_SKIP_CAMERA === '1';
   const dashboard = getDashboard(); const errors = [], pandaRequests = [];
   const nativeProbe = process.env.FITGATE_NATIVE_PROBE === '1' && process.env.FITGATE_TEST_HIDDEN !== '1';
   const visualHoldMs = process.env.FITGATE_TEST_HIDDEN === '1' ? 0 : Math.min(60000, Math.max(0, Number(process.env.FITGATE_VISUAL_HOLD_MS) || 0));
@@ -136,11 +137,21 @@ export async function runSmoke({ app, engine, getDashboard, getWorkout, getRemin
   // Exercise display reconciliation without changing the computer's display settings.
   const displays = screen.getAllDisplays();
   const addedDisplay = { ...pointerDisplay, id: -2147483000, bounds: { ...pointerDisplay.bounds } };
-  reconcileReminders([...displays, addedDisplay]);
-  await until(() => getReminders().find(window => window.reminderDisplayId === addedDisplay.id)?.webContents.executeJavaScript('typeof document.querySelector("#begin")?.onclick === "function"'), 'new display receives a reminder');
-  assertDisplayCoverage([...displays, addedDisplay]);
-  const addedWindow = getReminders().find(window => window.reminderDisplayId === addedDisplay.id);
-  reconcileReminders(displays);
+  const realGetAllDisplays = screen.getAllDisplays;
+  let addedWindow;
+  // Native display events must observe the same simulated topology as reconciliation.
+  // Otherwise a metrics event removes the synthetic display before its renderer loads.
+  screen.getAllDisplays = () => [...displays, addedDisplay];
+  try {
+    reconcileReminders(screen.getAllDisplays());
+    screen.emit('display-metrics-changed', {}, pointerDisplay, ['bounds']);
+    await until(() => getReminders().find(window => window.reminderDisplayId === addedDisplay.id)?.webContents.executeJavaScript('typeof document.querySelector("#begin")?.onclick === "function"'), 'new display receives a reminder');
+    assertDisplayCoverage([...displays, addedDisplay]);
+    addedWindow = getReminders().find(window => window.reminderDisplayId === addedDisplay.id);
+  } finally {
+    screen.getAllDisplays = realGetAllDisplays;
+    reconcileReminders(screen.getAllDisplays());
+  }
   assertDisplayCoverage();
   assert.equal(addedWindow.isDestroyed(), true, 'removing a display closes only its reminder');
   for (const window of getReminders()) assert.equal(window.id, displayWindowIds.get(window.reminderDisplayId), 'display changes retain existing reminder renderers');
@@ -228,6 +239,7 @@ export async function runSmoke({ app, engine, getDashboard, getWorkout, getRemin
   await until(() => !getWorkout(), 'workout closes after success');
   assert.equal(getReminders().length, 0, 'completing the workout releases every display');
   // Verify bundled model + WebGL + camera path using Chromium's synthetic test camera.
+  if (!skipCamera) {
   engine.updateSettings({ cameraEnabled: true, actionCountPerSession: 1 });
   openWorkout(); w = getWorkout();
   assert.equal(w.isMovable(), true, 'manual workout remains a normal movable window');
@@ -243,6 +255,9 @@ export async function runSmoke({ app, engine, getDashboard, getWorkout, getRemin
   console.log('SMOKE: suspension passed');
   w.close();
   await until(() => !getWorkout(), 'camera workout closed');
+  } else {
+    console.log('SMOKE SKIPPED: camera + offline AI inference (FITGATE_SKIP_CAMERA=1; no usable GPU on hosted runner).');
+  }
   // Simulate Electron power events only; the computer itself is never locked.
   engine.updateSettings({ cameraEnabled: false });
   engine.usage.isLocked = true; engine.usage.snoozedUntil = 0;
@@ -295,6 +310,6 @@ export async function runSmoke({ app, engine, getDashboard, getWorkout, getRemin
   webSession.webRequest.onBeforeRequest(null);
   const realErrors = errors.filter(e => !e.includes('favicon.ico') && !e.includes('GPU stall'));
   assert.deepEqual(realErrors, [], 'no renderer errors');
-  fs.writeFileSync(path.join(artifacts, 'smoke-result.json'), JSON.stringify({ passed: true, version: app.getVersion(), arch: process.arch, translated: app.runningUnderARM64Translation, darwin: os.release(), packaged: app.isPackaged, electron: process.versions.electron, native: true, settings: true, multiSetTimer: true, cameraModel: true, reminder: true, fullScreenReminder: true, allDisplaysCovered: true, immovableReminder: true, protectedWorkout: true, lockRecovery: true, nativeHideRecovery: nativeProbe, previewLifecycle: true, pausedPreview: true, displayUpdatesPreservePopup: true, displayAddRemove: true, noAnimationRequests: true, snooze: true, errors }, null, 2));
-  console.log('SMOKE PASSED: native monitor, dashboard, settings, full-screen multi-display reminder, protected workout, lock/unlock recovery, preview lifecycle, display reconciliation, no animation requests, two timed sets, pause/resume, completion, offline MoveNet + synthetic camera, snooze.');
+  fs.writeFileSync(path.join(artifacts, 'smoke-result.json'), JSON.stringify({ passed: true, scope: skipCamera ? 'desktop-core' : 'full', skipped: skipCamera ? ['cameraModel'] : [], version: app.getVersion(), arch: process.arch, translated: app.runningUnderARM64Translation, darwin: os.release(), packaged: app.isPackaged, electron: process.versions.electron, native: true, settings: true, multiSetTimer: true, cameraModel: !skipCamera, reminder: true, fullScreenReminder: true, allDisplaysCovered: true, immovableReminder: true, protectedWorkout: true, lockRecovery: true, nativeHideRecovery: nativeProbe, previewLifecycle: true, pausedPreview: true, displayUpdatesPreservePopup: true, displayAddRemove: true, noAnimationRequests: true, snooze: true, errors }, null, 2));
+  console.log(`SMOKE PASSED (${skipCamera ? 'desktop core; camera/model explicitly skipped' : 'full, including offline MoveNet + synthetic camera'}): native monitor, dashboard, settings, full-screen multi-display reminder, protected workout, lock/unlock recovery, preview lifecycle, display reconciliation, no animation requests, two timed sets, pause/resume, completion, snooze.`);
 }

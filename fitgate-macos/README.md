@@ -58,7 +58,7 @@ npm run package:arm64
 - `npm run smoke`：以独立临时数据目录运行 Electron，验证主界面、原生监测、设置、提醒、真实双组倒计时、暂停恢复、自动完成与离线 AI 模型加载。使用合成摄像头，不访问真实摄像头。截图与结果在 `artifacts/`。
 - `npm run package`：默认构建当前机器架构，可用 `FITGATE_ARCH=x64` 或 `arm64` 指定。分别编译对应架构、以 macOS 13 为最低版本的 Swift 监测器，构建 `.app` 和 ZIP，检查所有 Mach-O 文件的架构、最低系统版本、动态库路径与签名。结果在 `release/`，校验记录为 `compatibility-<arch>.json`。
 - `node scripts/verify-package.mjs release/FitGate-darwin-x64/FitGate.app x64`：独立复核安装包。将两处架构改为 `arm64` 可复核 M 系列版本。
-- GitHub Actions 在 macOS 15 的 Intel 和 Apple Silicon 环境分别运行单元测试、原生构建与打包应用冒烟测试。测试使用临时设置目录及合成摄像头；结果以工作流附件保存。
+- GitHub Actions 在 macOS 15 的 Intel 和 Apple Silicon 环境分别运行单元测试、原生构建与核心桌面功能冒烟测试。由于托管环境无法初始化 GPU，CI 显式设置 `FITGATE_SKIP_CAMERA=1`，报告中标记摄像头/AI 测试未执行；完整摄像头与离线模型测试在本机运行。所有冒烟测试使用临时设置目录，结果以工作流附件保存。
 
 桌面端采用 Electron + Swift NSWorkspace。渲染进程启用 sandbox、context isolation，禁用 Node integration；预加载桥接只暴露有限 IPC；资源来自受约束的本地 `fitgate://app/` 协议。
 

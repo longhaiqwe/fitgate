@@ -31,6 +31,9 @@ jobs:
       FITGATE_ARCH: ${{ matrix.arch }}
       FITGATE_EXPECT_ARCH: ${{ matrix.arch }}
       FITGATE_TEST_HIDDEN: '1'
+      # Hosted macOS runners cannot initialize an accelerated GPU/WebGL camera path.
+      # The full camera/model smoke runs locally; CI explicitly reports this omission.
+      FITGATE_SKIP_CAMERA: '1'
       FITGATE_ARTIFACT_DIR: ${{ github.workspace }}/fitgate-macos/artifacts/ci
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -48,7 +51,7 @@ jobs:
         timeout-minutes: 5
         run: |
           "release/FitGate-darwin-${FITGATE_ARCH}/FitGate.app/Contents/MacOS/FitGate" --smoke-test
-          node -e 'const r=require("./artifacts/ci/smoke-result.json"); const a=require("node:assert/strict"); a.equal(r.passed,true); a.equal(r.arch,process.env.FITGATE_ARCH); a.equal(r.packaged,true); a.equal(r.translated,false)'
+          node -e 'const r=require("./artifacts/ci/smoke-result.json"); const a=require("node:assert/strict"); a.equal(r.passed,true); a.equal(r.arch,process.env.FITGATE_ARCH); a.equal(r.packaged,true); a.equal(r.translated,false); a.equal(r.scope,"desktop-core"); a.equal(r.cameraModel,false)'
       - name: Save compatibility evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
