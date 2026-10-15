@@ -1,0 +1,15 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>提醒弹窗预览</title></head><body><script type="module">
+const html = await fetch('/reminder.html').then(response => response.text());
+const doc = new DOMParser().parseFromString(html, 'text/html');
+doc.querySelectorAll('script').forEach(script => script.remove());
+document.body.replaceChildren(...doc.body.childNodes);
+history.replaceState(null, '', `${location.pathname}?preview=1`);
+window.fitgate = {
+  status: async () => ({ settings: { scenario: 'office_seated', activeActionId: 'seated_hold_head_down', actionCountPerSession: 2, usageLimit: 25 }, usage: { restEndsAt: 0 } }),
+  onStatus: () => () => {},
+  closePreview: () => { document.body.hidden = true; },
+  snooze: () => { document.body.hidden = true; },
+  openWorkout: () => { document.querySelector('#begin').textContent = '已点击开始伴练'; }
+};
+await import('/src/reminder.js');
+</script></body></html>

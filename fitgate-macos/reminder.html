@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitGate · 活动提醒</title>
+</head>
+<body>
+  <main class="reminder-screen">
+  <section class="reminder-card" role="dialog" aria-modal="true" aria-labelledby="reminder-title" aria-describedby="reminder-description">
+    <header class="reminder-header">
+      <span class="app-name"><img src="/icons/icon48.png" alt="">FitGate</span>
+      <button id="close-preview" class="close-preview" aria-label="关闭预览" title="关闭预览" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <section class="reminder-heading">
+      <h1 id="reminder-title">活动提醒</h1>
+      <p id="reminder-description">已达到本轮使用上限。</p>
+    </section>
+    <section class="rest-clock" aria-label="休息倒计时">
+      <span class="clock-label" id="clock-label">休息倒计时</span>
+      <time id="rest-time" role="timer" aria-live="off">05:00</time>
+      <p class="clock-note" id="clock-note">休息结束或完成伴练后，重新计时。</p>
+    </section>
+    <dl class="action-detail">
+      <div><dt>伴练动作</dt><dd id="action-title">正在读取动作</dd></div>
+      <div><dt>活动目标</dt><dd id="action-count">1 组动作</dd></div>
+    </dl>
+    <div class="reminder-actions" aria-label="提醒操作">
+      <button class="primary" id="begin">开始伴练</button>
+      <button class="snooze" id="snooze">推迟 5 分钟</button>
+      <span class="keyboard-hint" id="keyboard-hint">按 Esc 推迟 5 分钟</span>
+    </div>
+  </section>
+  </main>
+  <script type="module" src="/src/reminder.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name": "fitgate-macos",
+  "version": "1.1.0",
+  "description": "FitGate · 电脑使用计时与活动提醒",
+  "author": "FitGate",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "build:web": "vite build",
+    "build:native": "node scripts/build-native.mjs",
+    "build": "npm run build:web && npm run build:native",
+    "start": "npm run build && electron .",
+    "test": "node --test test/*.test.js",
+    "smoke": "npm run build && electron . --smoke-test",
+    "package": "npm run build:web && node scripts/package.mjs",
+    "package:x64": "FITGATE_ARCH=x64 npm run package",
+    "package:arm64": "FITGATE_ARCH=arm64 npm run package"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.7.0",
+    "vite": "5.4.21",
+    "@tensorflow-models/pose-detection": "2.1.3",
+    "@tensorflow/tfjs-backend-webgl": "4.22.0",
+    "@tensorflow/tfjs-converter": "4.22.0",
+    "@tensorflow/tfjs-core": "4.22.0"
+  }
+}

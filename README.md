@@ -2,6 +2,10 @@
 
 FitGate 是一个基于 Chrome Manifest V3 的网页使用时间控制与身体活动伴练扩展。当受控网站的累计使用时间达到设定阈值时，扩展会在网页上方覆盖全屏提示层，要求使用者完成指定场景下的身体活动动作后解除锁定。
 
+现已提供独立的 **macOS 桌面版**，可统计整台电脑、指定应用或指定网站的使用时间，并通过全屏休息提醒与动作伴练帮助定时活动。支持 Intel 和 Apple Silicon，要求 macOS 13 或以上。
+
+[下载 macOS 安装包](https://github.com/longhaiqwe/fitgate/releases) · [桌面版使用与构建说明](fitgate-macos/README.md) · [兼容性验证](fitgate-macos/COMPATIBILITY.md)
+
 ---
 
 ## 一、安装与加载

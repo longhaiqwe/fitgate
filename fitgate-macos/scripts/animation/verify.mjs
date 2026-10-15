@@ -1,0 +1,70 @@
+import {app,BrowserWindow} from 'electron';
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+app.commandLine.appendSwitch('force-device-scale-factor','2');
+const out=path.resolve('artifacts/animation-review');fs.mkdirSync(out,{recursive:true});
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+async function until(check,label){for(let i=0;i<100;i++){if(await check())return;await delay(100);}throw new Error('Timeout: '+label);}
+app.whenReady().then(async()=>{
+ const w=new BrowserWindow({width:1440,height:900,show:false,frame:false,transparent:true,backgroundColor:'#00000000',webPreferences:{backgroundThrottling:false}});
+ const errors=[];w.webContents.on('console-message',d=>{if(d.level==='error')errors.push(d.message);});
+ const js=s=>w.webContents.executeJavaScript(s);
+ try{
+  await w.loadURL('http://127.0.0.1:5188/dev/reminder-preview.html');
+  await until(()=>js('window.__scene?.element.dataset.ready==="true"'),'media ready');
+  await js(`Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});window.__scene.start()`);
+  await until(()=>js('document.querySelector("video").currentTime>0.3&&window.__scene.element.dataset.mode==="video"'),'decoded alpha video');
+  const duration=await js('document.querySelector("video").duration');assert.ok(duration>6&&duration<7);
+  const t=await js('document.querySelector("video").currentTime');await delay(400);
+  assert.ok(await js('document.querySelector("video").currentTime')>t,'playback advances');
+  await js('window.__scene.stop()');const stopped=await js('document.querySelector("video").currentTime');await delay(200);
+  assert.equal(await js('document.querySelector("video").currentTime'),stopped,'stop pauses decoder');
+  await js('window.__scene.start()');
+  w.webContents.debugger.attach('1.3');
+  await w.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await until(()=>js('window.__scene.element.dataset.mode==="photo"'),'reduced-motion photo');
+  assert.equal(await js('window.__scene.element.dataset.mode'),'photo');assert.ok(await js('document.querySelector("video").paused'));
+  await w.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[]});w.webContents.debugger.detach();
+  await until(()=>js('!document.querySelector("video").paused'),'resume motion');
+  await js(`document.querySelector('video').currentTime=${duration-0.4}`);
+  await until(()=>js('document.querySelector("video").ended'),'clip end');
+  assert.equal(await js('window.__scene.element.dataset.mode'),'rest');
+  const endTime=await js('document.querySelector("video").currentTime');await delay(300);
+  assert.equal(await js('document.querySelector("video").currentTime'),endTime,'final frame held, no loop jump');
+  assert.equal(await js('document.querySelector(".pd-breathing")?.dataset.state'),'running','rest starts breathing');
+  const chestRect={x:780,y:520,width:130,height:100};
+  const chestBefore=(await w.webContents.capturePage(chestRect)).toPNG();await delay(1100);
+  assert.notDeepEqual((await w.webContents.capturePage(chestRect)).toPNG(),chestBefore,'resting chest pixels move');
+  await js(`Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))`);
+  assert.equal(await js('document.querySelector(".pd-breathing").dataset.state'),'paused','hidden reminder stops breathing');
+  await js(`Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))`);
+  assert.equal(await js('document.querySelector(".pd-breathing").dataset.state'),'running');
+  w.webContents.debugger.attach('1.3');
+  await w.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await until(()=>js('window.__scene.element.dataset.mode==="photo"'),'rest reduced-motion photo');
+  assert.equal(await js('document.querySelector(".pd-breathing").dataset.state'),'paused');assert.equal(await js('window.__scene.element.dataset.mode'),'photo');
+  await w.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[]});w.webContents.debugger.detach();await until(()=>js('document.querySelector(".pd-breathing").dataset.state==="running"'),'rest breathing resumes');
+  assert.equal(await js('document.querySelector(".pd-breathing").dataset.state'),'running');
+  const capture=await w.webContents.capturePage();assert.equal(capture.toBitmap()[3],0,'native corner alpha');fs.writeFileSync(path.join(out,'transparent-rest.png'),capture.toPNG());
+  const layouts=[];
+  for(const [width,height] of [[800,600],[1440,900],[1920,1080],[2560,1080]]){
+   w.setContentSize(width,height);await delay(150);
+   const layout=await js(`(()=>{const ids=['begin','snooze','rest-time','close-preview'];return {width:innerWidth,height:innerHeight,controls:ids.map(id=>{const r=document.getElementById(id).getBoundingClientRect();return {id,visible:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,clickable:!['begin','snooze','close-preview'].includes(id)||document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.id===id}})}})()`);
+   const media=await js('(()=>{const r=document.querySelector("video").getBoundingClientRect();return {x:r.x,right:r.right,bottom:r.bottom}})()');assert.equal(media.x,0,'entry aligned to screen edge');assert.ok(media.right<=width+1&&media.bottom<=height+1);
+   await until(()=>js('(()=>{const c=document.querySelector(".pd-breathing"),r=c.getBoundingClientRect();return c.width===Math.round(r.width*devicePixelRatio)&&c.height===Math.round(r.height*devicePixelRatio)})()'),'canvas follows CSS size and Retina density');
+   layout.canvas=await js('(()=>{const c=document.querySelector(".pd-breathing"),r=c.getBoundingClientRect();return {width:c.width,height:c.height,cssWidth:r.width,cssHeight:r.height,dpr:devicePixelRatio}})()');
+   assert.equal(layout.canvas.dpr,2);
+   assert.ok(layout.controls.every(c=>c.visible&&c.clickable),JSON.stringify(layout));layouts.push(layout);
+  }
+  await js(`document.querySelector('.pd-breathing').getContext('webgl').getExtension('WEBGL_lose_context').loseContext()`);
+  await until(()=>js('window.__scene.element.dataset.breathing==="false"'),'context loss falls back');
+  assert.equal(await js('getComputedStyle(document.querySelector(".pd-poster")).visibility'),'visible','reference remains visible after GPU loss');
+  await js('window.__scene.stop()');assert.equal(await js('document.querySelector(".pd-breathing").dataset.state'),'paused');
+  await js('window.__scene.destroy()');assert.equal(await js('document.querySelector(".pd-breathing")'),null);assert.equal(await js('document.querySelector("video").getAttribute("src")'),null);
+  w.setContentSize(1440,900);await w.loadURL('http://127.0.0.1:5188/dev/panda-preview.html');
+  await until(()=>js('document.querySelector("iframe").contentWindow.__scene?.element.dataset.ready==="true"'),'composite preview');
+  await js(`(()=>{const f=document.querySelector('iframe').contentWindow;Object.defineProperty(f.document,'hidden',{configurable:true,get:()=>false});f.__scene.start()})()`);
+  await delay(7000);fs.writeFileSync(path.join(out,'desktop-composite.png'),(await w.webContents.capturePage()).toPNG());
+  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify({passed:true,duration,layouts,nativeAlpha:true,videoPlayback:true,referenceFrame:true,breathing:true,hiddenPausesBreathing:true,contextLossFallback:true,offscreenEntryAligned:true,reducedMotion:true,stop:true,destroy:true,errors},null,2));
+  console.log('Overlay review passed.');w.destroy();app.quit();
+ }catch(e){console.error(e);app.exit(1);}
+});

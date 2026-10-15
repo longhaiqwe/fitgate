@@ -1,0 +1,15 @@
+/* Shared native desktop surfaces and controls. */
+:root {
+  --desktop-background: #f7f8fa;
+  --desktop-surface: #fff;
+  --desktop-tint: #f0f4ee;
+  --desktop-text: #283d30;
+  --desktop-muted: #61715f;
+  --desktop-border: #e7e9eb;
+  --desktop-primary: #273e2f;
+  --desktop-primary-hover: #3a5442;
+  --desktop-focus: #4e8064;
+  --desktop-card-radius: 16px;
+  --desktop-button-radius: 9px;
+  --desktop-font: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}

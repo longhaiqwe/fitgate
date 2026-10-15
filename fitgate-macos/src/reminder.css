@@ -1,0 +1,100 @@
+@import './shared/desktop-theme.css';
+
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; background: var(--desktop-background); }
+body {
+  color: var(--desktop-text);
+  font: 14px var(--desktop-font);
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+}
+button { font: inherit; cursor: pointer; -webkit-app-region: no-drag; }
+button:focus-visible { outline: 2px solid var(--desktop-focus); outline-offset: 3px; }
+[hidden] { display: none !important; }
+.reminder-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  overflow: auto;
+  overscroll-behavior: none;
+  background: var(--desktop-background);
+}
+.reminder-card {
+  flex: none;
+  width: min(100%, 480px);
+  margin: auto 0;
+  padding: 22px 24px 24px;
+  border: 1px solid var(--desktop-border);
+  border-radius: var(--desktop-card-radius);
+  background: var(--desktop-surface);
+  box-shadow: 0 12px 36px #283d300a;
+}
+.reminder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.app-name { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 650; color: var(--desktop-text); }
+.app-name img { width: 23px; height: 23px; }
+.close-preview {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--desktop-button-radius);
+  background: transparent;
+  color: var(--desktop-muted);
+}
+.close-preview:hover { color: var(--desktop-text); background: var(--desktop-tint); }
+.reminder-heading { margin-bottom: 20px; text-align: center; }
+h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: -.3px; line-height: 1.3; }
+.reminder-heading p { margin: 0; color: var(--desktop-muted); font-size: 12px; line-height: 1.6; }
+.rest-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 14px;
+  border: 1px solid #e1e8dd;
+  border-radius: var(--desktop-card-radius);
+  background: var(--desktop-tint);
+  text-align: center;
+}
+.clock-label { color: var(--desktop-muted); font-size: 12px; line-height: 1.5; }
+#rest-time { font-size: 64px; line-height: 1.1; letter-spacing: -1.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.clock-note { margin: 0; color: var(--desktop-muted); font-size: 12px; line-height: 1.6; }
+.action-detail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; margin: 16px 0 18px; }
+.action-detail div:last-child { text-align: right; }
+.action-detail dt { margin-bottom: 5px; color: var(--desktop-muted); font-size: 12px; line-height: 1.5; }
+.action-detail dd { margin: 0; color: var(--desktop-text); font-size: 14px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.reminder-actions { display: grid; gap: 8px; }
+.primary, .snooze { width: 100%; min-height: 40px; border-radius: var(--desktop-button-radius); padding: 9px 18px; font-weight: 600; line-height: 1.5; }
+.primary { border: 1px solid #223a2b; background: var(--desktop-primary); color: #fff; font-size: 14px; box-shadow: 0 3px 5px #23382714; }
+.primary:hover { background: var(--desktop-primary-hover); }
+.primary:active { background: #223a2b; }
+.snooze { border: 1px solid var(--desktop-border); background: #f8faf7; color: var(--desktop-muted); font-size: 13px; }
+.snooze:hover { background: #edf2eb; }
+.keyboard-hint { color: var(--desktop-muted); font-size: 11px; line-height: 1.6; text-align: center; }
+@media (max-height: 540px) {
+  .reminder-screen { padding: 16px; }
+  .reminder-card { padding-top: 14px; padding-bottom: 16px; }
+  .reminder-header { margin-bottom: 8px; }
+  .reminder-heading { margin-bottom: 12px; }
+  .rest-clock { padding-top: 10px; padding-bottom: 10px; }
+  #rest-time { font-size: 44px; }
+  .action-detail { margin-top: 12px; margin-bottom: 14px; }
+}
+@media (max-width: 420px) {
+  .reminder-screen { padding: 12px; }
+  .reminder-card { padding-left: 16px; padding-right: 16px; }
+  h1 { font-size: 21px; }
+  .action-detail { gap: 14px; }
+}

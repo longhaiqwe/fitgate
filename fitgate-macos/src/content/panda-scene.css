@@ -1,0 +1,13 @@
+.pd-scene{position:absolute;inset:0;overflow:hidden;pointer-events:none;user-select:none;z-index:1}
+.pd-media{position:absolute;width:auto;height:91vh;aspect-ratio:var(--panda-ratio,1);max-width:88vw;object-fit:contain;left:51%;bottom:1.2vh;transform:translateX(-50%);visibility:hidden;-webkit-user-drag:none}
+.pd-scene[data-mode="photo"] .pd-poster{visibility:visible}
+.pd-scene[data-mode="video"] .pd-video,.pd-scene[data-mode="rest"] .pd-video{visibility:visible}
+.pd-scene[data-mode="video"] .pd-poster,.pd-scene[data-mode="rest"] .pd-poster{visibility:hidden}
+
+/* The viewport clip contains its own offscreen entry and ground coordinates. */
+.pd-scene[data-layout="viewport"] .pd-media{width:min(100vw,177.777778vh);height:min(100vh,56.25vw);max-width:none;left:0;bottom:0;transform:none;object-fit:fill}
+.pd-scene[data-end="reference-frame"][data-mode="rest"] .pd-video{visibility:hidden}
+.pd-scene[data-end="reference-frame"][data-mode="rest"] .pd-poster{visibility:visible}
+
+.pd-scene[data-mode="rest"][data-breathing="true"] .pd-poster{visibility:hidden}
+.pd-scene[data-mode="rest"][data-breathing="true"] .pd-breathing{visibility:visible}

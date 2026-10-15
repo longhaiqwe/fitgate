@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitGate 伴练</title>
+  <link rel="stylesheet" href="./workout.css">
+</head>
+<body>
+  <!-- 顶部状态栏 -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon" id="header-brand-icon">🏋️‍♂️</span>
+      <span class="brand-name">FitGate 伴练</span>
+      <span class="badge-target" id="header-target-badge">目标：准备就绪</span>
+      <span class="badge-queue-progress" id="queue-progress-badge" style="display: none;">动作 1 / 1</span>
+    </div>
+
+    <!-- 快速切换动作选择器与检测模式切换器 -->
+    <div class="action-switch-box">
+      <span class="switch-label">🔄 动作：</span>
+      <select id="action-selector" class="action-selector-dropdown">
+        <!-- 动态由 JS 填充全部动作 -->
+      </select>
+    </div>
+
+    <!-- 摄像头/纯计时模式切换器 -->
+    <div class="action-switch-box" id="mode-switch-box">
+      <span class="switch-label">模式：</span>
+      <select id="mode-selector" class="action-selector-dropdown">
+        <option value="camera">📷 摄像头 AI 判定</option>
+        <option value="timer">⏱️ 无摄像头纯计时</option>
+      </select>
+    </div>
+
+    <div class="privacy-badge">
+      <span>🛡️</span>
+      <span id="privacy-badge-text">本地姿态检测 · 视频不上传</span>
+    </div>
+    <button type="button" id="desktop-close-workout" class="desktop-close-workout">结束本次伴练</button>
+  </header>
+
+  <!-- 主体工作区 -->
+  <main>
+    <!-- 左侧：动作训练舞台 (摄像头 AI 检测舞台 vs 无摄像头纯计时伴练舞台) -->
+    <div class="stage-container">
+      <!-- 模式 1：摄像头 AI 视觉检测舞台 (支持深蹲与全部 15 种动作) -->
+      <div class="squat-stage" id="camera-stage">
+        <div class="stage-overlay-tips">
+          <div class="status-pill standing" id="status-pill">等待就绪</div>
+          <div class="status-pill" id="fps-counter">FPS: --</div>
+        </div>
+
+        <video id="webcam" playsinline autoplay muted></video>
+        <canvas id="pose-canvas"></canvas>
+
+        <!-- 悬浮动作图解示范卡 (PIP 图解小窗) -->
+        <div class="guide-pip-box" id="guide-pip-box" title="参考动作示范">
+          <img id="guide-pip-img" src="" alt="动作示范" />
+          <span class="guide-pip-tag" id="guide-pip-tag">标准示范</span>
+        </div>
+
+        <div class="loading-mask" id="loading-mask">
+          <div class="spinner" id="loading-spinner"></div>
+          <div class="loading-text" id="loading-text">正在启动摄像头与加载 AI 姿态检测模型...</div>
+          <div class="loading-actions hidden" id="loading-fallback-actions" style="margin-top: 14px;">
+            <button class="stage-btn-control" id="btn-fallback-timer">切换为无摄像头纯计时模式</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式 2：无摄像头纯计时伴练舞台 (原著指导大图 + 倒计时进度) -->
+      <div class="stretch-stage hidden" id="timer-stage">
+        <div class="stretch-img-card">
+          <img id="timer-guide-img" class="stretch-guide-img" src="" alt="动作指导示范" />
+          <div class="stretch-img-badge" id="timer-img-badge">工位示范 · 纯计时伴练</div>
+        </div>
+
+        <!-- 舞台底部伴练控制条 -->
+        <div class="stretch-stage-controls">
+          <button class="stage-btn-control" id="btn-toggle-timer">
+            <span id="btn-timer-icon">⏸️</span>
+            <span id="btn-timer-text">暂停计时</span>
+          </button>
+          <button class="stage-btn-control secondary" id="btn-reset-timer">
+            <span>🔄</span>
+            <span>重新开始</span>
+          </button>
+          <button class="stage-btn-control secondary" id="btn-manual-count" style="display: none;" title="已完成动作时，手动确认本组完成">
+            <span>⚡</span>
+            <span>确认本组完成</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：动作教学与数据仪表盘 -->
+    <div class="dashboard-container">
+      <!-- 1. 动作要领与安全禁忌卡片 -->
+      <div class="dashboard-card guide-card">
+        <div class="guide-header">
+          <h2 class="action-main-title" id="action-title">背后交扣侧头</h2>
+        </div>
+
+        <div class="guide-block">
+          <div class="guide-block-label">🎯 针对部位</div>
+          <p class="guide-block-content" id="action-target-area">久坐低头看屏幕耸肩，把肩膀打开一点。</p>
+        </div>
+
+        <div class="guide-block">
+          <div class="guide-block-label">📋 动作步骤</div>
+          <ol class="guide-steps-list" id="action-steps-list">
+            <!-- 步骤动态插入 -->
+          </ol>
+        </div>
+
+        <div class="guide-block alert-block">
+          <div class="guide-block-label alert">⚠️ 注意事项</div>
+          <p class="guide-block-content alert" id="action-check-stop">
+            拉伸感在倒下去那一侧的脖子，肩膀是打开的。若脖子手臂发麻、刺痛，立即停。
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. 实时数据与计数/倒计时卡片 -->
+      <div class="dashboard-card metrics-card">
+        <!-- 深蹲数据面板 (Squat) -->
+        <div id="squat-metrics-panel">
+          <div class="counter-label" id="counter-metric-label">已完成次数</div>
+          <div class="counter-value-box">
+            <span class="counter-current" id="squat-current-count">0</span>
+            <span class="counter-target" id="squat-target-count">/ 10</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="squat-progress-bar"></div>
+          </div>
+
+          <div class="angle-row-box">
+            <div class="angle-row">
+              <span class="angle-label" id="counter-param-label">膝关节夹角</span>
+              <span class="angle-value" id="current-angle-text">--</span>
+            </div>
+            <div class="angle-row" id="counter-threshold-row">
+              <span class="angle-label" id="counter-threshold-label">达标有效深度</span>
+              <span class="angle-label" id="threshold-angle-text" style="color: var(--accent-green); font-weight: 700;">≤ 120°</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 拉伸数据面板 (Stretch) -->
+        <div id="stretch-metrics-panel" class="hidden">
+          <div class="counter-label" id="stretch-status-label">拉伸倒计时</div>
+          <div class="counter-value-box">
+            <span class="counter-current" id="stretch-remaining-sec">30</span>
+            <span class="counter-target" id="stretch-total-sec">/ 30s</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar" id="stretch-progress-bar"></div>
+          </div>
+
+          <div class="stretch-phase-box">
+            <div class="stretch-phase-tag" id="stretch-phase-tag">第 1/2 侧 · 保持中</div>
+            <div class="stretch-phase-hint" id="stretch-phase-hint">保持平稳深呼吸，不可用力猛拽</div>
+          </div>
+        </div>
+
+        <!-- 实时指导提示气泡 -->
+        <div class="feedback-bubble">
+          <span class="icon" id="feedback-icon">💡</span>
+          <span id="feedback-text">站在镜头前，后退至全身或双腿可见位置</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 胜利通关模态层 -->
+  <div class="victory-modal" id="victory-modal">
+    <div class="victory-box">
+      <div class="victory-icon">✓</div>
+      <h2 class="victory-title" id="victory-title">本次活动已完成</h2>
+      <p class="victory-desc" id="victory-desc">已记录本次活动，使用时长已重置。</p>
+      <div class="badge-target" style="display: inline-block;">即将自动关闭本页</div>
+    </div>
+  </div>
+
+  <script type="module" src="./workout.js"></script>
+</body>
+</html>

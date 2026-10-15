@@ -1,0 +1,9 @@
+node_modules/
+dist/
+release/
+artifacts/
+native/activity-monitor
+build/
+.DS_Store
+__pycache__/
+*.pyc

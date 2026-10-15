@@ -1,0 +1,60 @@
+name: macOS compatibility
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['fitgate-macos/**', '.github/workflows/macos-compatibility.yml']
+  pull_request:
+    paths: ['fitgate-macos/**', '.github/workflows/macos-compatibility.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  package-and-smoke:
+    name: macOS 15 / ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            arch: x64
+          - runner: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: fitgate-macos
+    env:
+      FITGATE_ARCH: ${{ matrix.arch }}
+      FITGATE_EXPECT_ARCH: ${{ matrix.arch }}
+      FITGATE_TEST_HIDDEN: '1'
+      FITGATE_ARTIFACT_DIR: ${{ github.workspace }}/fitgate-macos/artifacts/ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: fitgate-macos/package-lock.json
+      - name: Verify native runner architecture
+        run: node -e 'require("node:assert/strict").equal(process.arch, process.env.FITGATE_ARCH)'
+      - run: npm ci
+      - run: npm test
+      - run: npm run package
+      - name: Exercise the packaged application
+        timeout-minutes: 5
+        run: |
+          "release/FitGate-darwin-${FITGATE_ARCH}/FitGate.app/Contents/MacOS/FitGate" --smoke-test
+          node -e 'const r=require("./artifacts/ci/smoke-result.json"); const a=require("node:assert/strict"); a.equal(r.passed,true); a.equal(r.arch,process.env.FITGATE_ARCH); a.equal(r.packaged,true); a.equal(r.translated,false)'
+      - name: Save compatibility evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: compatibility-${{ matrix.arch }}
+          path: |
+            fitgate-macos/artifacts/ci/
+            fitgate-macos/release/compatibility-*.json
+          retention-days: 30
