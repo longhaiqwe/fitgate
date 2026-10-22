@@ -23,7 +23,16 @@ async function until(check, description, timeout = 20000) {
   }
   throw new Error(`Timed out: ${description}`);
 }
-export async function runSmoke({ app, engine, getDashboard, getWorkout, getReminders, openWorkout, showReminder, dismissReminders, reconcileReminders, status, root }) {
+export async function runSmoke(context) {
+  // Synthetic UI clicks and power events do not reset the host's HID idle time.
+  // Model an active user here; the idle-rest scenario below supplies its own sample.
+  const hostIdleTime = powerMonitor.getSystemIdleTime;
+  console.log(`SMOKE: host idle ${hostIdleTime.call(powerMonitor)}s; using controlled idle samples`);
+  powerMonitor.getSystemIdleTime = () => 0;
+  try { return await runSmokeScenarios(context); }
+  finally { powerMonitor.getSystemIdleTime = hostIdleTime; }
+}
+async function runSmokeScenarios({ app, engine, getDashboard, getWorkout, getReminders, openWorkout, showReminder, dismissReminders, reconcileReminders, status, root }) {
   if (process.env.FITGATE_EXPECT_ARCH) assert.equal(process.arch, process.env.FITGATE_EXPECT_ARCH, 'packaged app runs the expected architecture');
   const artifacts = process.env.FITGATE_ARTIFACT_DIR || path.join(root, 'artifacts'); fs.mkdirSync(artifacts, { recursive: true });
   const skipCamera = process.env.FITGATE_SKIP_CAMERA === '1';
