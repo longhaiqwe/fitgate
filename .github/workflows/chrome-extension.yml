@@ -1,0 +1,37 @@
+name: Chrome extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['apps/chrome-extension/**', 'packages/**', 'package.json', 'package-lock.json', '.github/workflows/chrome-extension.yml']
+  pull_request:
+    paths: ['apps/chrome-extension/**', 'packages/**', 'package.json', 'package-lock.json', '.github/workflows/chrome-extension.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke:chrome
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: chrome-extension
+          path: |
+            apps/chrome-extension/dist/
+            apps/chrome-extension/artifacts/
+          retention-days: 14

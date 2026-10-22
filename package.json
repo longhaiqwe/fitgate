@@ -1,20 +1,24 @@
 {
-  "name": "fitgate-extension",
-  "version": "1.0.0",
-  "description": "居家办公防沉迷深蹲健身插件",
+  "name": "fitgate",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "test": "node test/actions-data.test.js && node test/storage-settings.test.js && node test/stretch-runner.test.js && node test/squat-counter.test.js && node test/squat-stability.test.js && node test/target-rules.test.js && node test/pose-evaluator.test.js && node test/jumping-jack-counter.test.js && node test/audio.test.js && node test/keypoint-smoother.test.js && node test/duration-parser.test.js"
-  },
-  "dependencies": {
-    "@tensorflow-models/pose-detection": "^2.1.3",
-    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
-    "@tensorflow/tfjs-converter": "^4.22.0",
-    "@tensorflow/tfjs-core": "^4.22.0"
-  },
-  "devDependencies": {
-    "vite": "^5.4.10"
+    "dev": "npm run dev:chrome",
+    "dev:chrome": "npm run dev --workspace=fitgate-extension",
+    "dev:macos": "npm start --workspace=fitgate-macos",
+    "build": "npm run build:chrome && npm run build:macos",
+    "build:chrome": "npm run build --workspace=fitgate-extension",
+    "build:macos": "npm run build --workspace=fitgate-macos",
+    "test": "npm run test --workspaces --if-present",
+    "smoke:macos": "npm run smoke --workspace=fitgate-macos",
+    "smoke:startup": "npm run smoke:startup --workspace=fitgate-macos",
+    "package:macos": "npm run package --workspace=fitgate-macos",
+    "smoke:chrome": "npm run smoke --workspace=fitgate-extension",
+    "release:macos": "npm run package:release --workspace=fitgate-macos"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "@fitgate/workout-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./audio.js": "./src/audio.js",
+    "./duration-parser.js": "./src/duration-parser.js",
+    "./target-rules.js": "./src/target-rules.js",
+    "./tokens.css": "./src/tokens.css",
+    "./keypoint-smoother.js": "./src/keypoint-smoother.js",
+    "./pose-geometry.js": "./src/pose-geometry.js",
+    "./action-catalog.js": "./src/action-catalog.js",
+    "./stretch-runner.js": "./src/stretch-runner.js",
+    "./jumping-jack-counter.js": "./src/jumping-jack-counter.js",
+    "./pose-detector.js": "./src/pose-detector.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

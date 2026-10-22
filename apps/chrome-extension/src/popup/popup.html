@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitGate 办公防沉迷</title>
+  <link rel="stylesheet" href="./popup.css">
+</head>
+<body>
+  <!-- 顶部标题栏 -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon">🏋️‍♂️</span>
+      <span class="brand-title">FitGate 防沉迷</span>
+    </div>
+    <div class="header-right">
+      <div class="status-badge" id="system-status">守护中</div>
+      <button type="button" class="btn-icon" id="btn-goto-settings" title="规则与受控网站设置" aria-label="设置">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== 1. 主视图 (Main View - 高频首屏) ==================== -->
+  <main id="view-main" class="view active">
+    <!-- 核心一体化数据看板（今日战绩 + 累计使用进度融合） -->
+    <div class="dashboard-card">
+      <div class="dashboard-row">
+        <div class="dashboard-col">
+          <div class="dashboard-label">今日完成</div>
+          <div class="dashboard-val-highlight" id="stats-workout-count">0 次</div>
+        </div>
+        <div class="dashboard-divider"></div>
+        <div class="dashboard-col">
+          <div class="dashboard-label">当前累计</div>
+          <div class="dashboard-val-text" id="val-current-usage">0 / 20 分钟</div>
+        </div>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="usage-progress-bar">
+        <div class="usage-progress-fill" id="usage-progress-fill" style="width: 0%;"></div>
+      </div>
+      <div class="dashboard-hint" id="usage-remaining-hint">跨受控网站统一累计，满额强制锁屏提醒</div>
+
+      <!-- 今日动作按名称汇总列表 -->
+      <div class="today-actions-summary" id="today-actions-summary" style="display: none;">
+        <div class="today-actions-divider"></div>
+        <div class="today-actions-header">
+          <span class="today-actions-title">今日动作统计</span>
+          <span class="today-actions-types-count" id="today-actions-types-count">0 项</span>
+        </div>
+        <div class="today-actions-list" id="today-actions-list"></div>
+      </div>
+    </div>
+
+    <!-- 工作场景快速切换 (紧凑分段胶囊选择器) -->
+    <div class="scenario-segmented-wrapper">
+      <div class="scenario-segmented">
+        <button type="button" class="segment-btn active" data-scenario="office_seated">
+          <span class="segment-icon">🪑</span>
+          <span class="segment-title">坐姿</span>
+        </button>
+        <button type="button" class="segment-btn" data-scenario="office_standing">
+          <span class="segment-icon">🚶</span>
+          <span class="segment-title">站立</span>
+        </button>
+        <button type="button" class="segment-btn" data-scenario="home_active">
+          <span class="segment-icon">🏠</span>
+          <span class="segment-title">居家</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 核心 CTA：立即伴练打卡（直接提至首屏，触手可及） -->
+    <button class="btn-primary-workout" id="btn-open-workout">
+      <span class="btn-workout-icon">🚀</span>
+      <span class="btn-workout-text">立即开始活动 / 伴练打卡</span>
+    </button>
+
+    <!-- 下个解锁动作精简条 -->
+    <div class="action-summary-strip">
+      <div class="action-strip-left">
+        <span class="action-strip-badge">解锁动作</span>
+        <span class="action-strip-name" id="action-strip-title">智能轮换 · 坐姿侧头舒展</span>
+      </div>
+      <select id="select-active-action" class="action-strip-select" title="选择解锁动作">
+        <option value="auto">🎲 智能轮换</option>
+      </select>
+    </div>
+
+    <!-- 当前网站受控状态条（高频上下文感知） -->
+    <div class="current-site-bar" id="current-site-bar">
+      <div class="current-site-info">
+        <span class="site-status-dot" id="site-status-dot"></span>
+        <span class="site-status-text" id="site-status-text">检测当前网页中...</span>
+      </div>
+      <button type="button" class="btn-site-action" id="btn-site-quick-action" style="display: none;">+ 加入受控</button>
+    </div>
+  </main>
+
+  <!-- ==================== 2. 设置视图 (Settings View - 次频/低频配置) ==================== -->
+  <section id="view-settings" class="view" style="display: none;">
+    <div class="settings-sub-header">
+      <button type="button" class="btn-back" id="btn-back-to-main">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <span>返回</span>
+      </button>
+      <span class="settings-sub-title">规则与受控网站</span>
+      <span style="width: 48px;"></span>
+    </div>
+
+    <!-- 规则参数设置 -->
+    <div class="setting-section">
+      <div class="section-label">
+        <span>规则参数设置</span>
+        <div class="tooltip-container">
+          <span class="info-circle" tabindex="0" role="button" aria-label="规则参数说明">ⓘ</span>
+          <div class="info-tooltip tooltip-down-right">
+            • <b>上限与组数</b>：控制防沉迷锁屏周期与达标组数。<br>
+            • <b>深蹲与拉伸</b>：分别控制深蹲（按次数）与拉伸舒展（按秒数）的单组达标要求，系统根据当前动作自动匹配对应指标。
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷预设组合 -->
+      <div class="preset-pills-row">
+        <span class="preset-row-label">快捷预设</span>
+        <div class="preset-buttons" id="preset-buttons">
+          <button type="button" class="preset-pill-btn" data-preset="pomodoro" title="工作 25 分钟，完成 1 组动作">
+            🍅 25m / 1组
+          </button>
+          <button type="button" class="preset-pill-btn" data-preset="deep_work" title="工作 50 分钟，完成 3 组动作">
+            🧠 50m / 3组
+          </button>
+        </div>
+      </div>
+
+      <!-- 四项数值规则：2x2 双列网格卡片 -->
+      <div class="settings-grid">
+        <div class="setting-grid-card" id="usage-limit-item">
+          <span class="grid-card-label">累计使用上限</span>
+          <div class="item-input-group">
+            <input
+              type="text"
+              class="item-val-input"
+              id="input-usage-limit-text"
+              value="20"
+              inputmode="numeric"
+              title="支持手动输入时长，或按方向键调节"
+              aria-label="累计使用上限"
+            >
+            <span class="item-val-unit">分</span>
+          </div>
+        </div>
+
+        <div class="setting-grid-card" id="action-count-item">
+          <span class="grid-card-label">达标动作组数</span>
+          <div class="item-input-group">
+            <input
+              type="text"
+              class="item-val-input"
+              id="input-action-count-text"
+              value="1"
+              inputmode="numeric"
+              title="支持手动输入 1~5 组，或按方向键调节"
+              aria-label="每次达标动作组数"
+            >
+            <span class="item-val-unit">组</span>
+          </div>
+        </div>
+
+        <div class="setting-grid-card" id="squat-target-item">
+          <span class="grid-card-label">解锁深蹲目标</span>
+          <div class="item-input-group">
+            <input
+              type="text"
+              class="item-val-input"
+              id="input-squat-target-text"
+              value="10"
+              inputmode="numeric"
+              title="支持手动输入深蹲次数，或按方向键调节"
+              aria-label="解锁深蹲目标"
+            >
+            <span class="item-val-unit">次</span>
+          </div>
+        </div>
+
+        <div class="setting-grid-card" id="stretch-seconds-item">
+          <span class="grid-card-label">单侧拉伸目标</span>
+          <div class="item-input-group">
+            <input
+              type="text"
+              class="item-val-input"
+              id="input-stretch-seconds-text"
+              value="30"
+              inputmode="numeric"
+              title="支持手动输入拉伸秒数，或按方向键调节"
+              aria-label="单侧拉伸目标时长"
+            >
+            <span class="item-val-unit">秒</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting-item" id="camera-mode-item">
+        <div class="item-header">
+          <span>姿态检测模式</span>
+          <span class="item-val" id="val-camera-mode">摄像头 AI 判定</span>
+        </div>
+        <select id="select-camera-mode" class="setting-select">
+          <option value="true">📷 摄像头 AI 视觉判断（动作达标才计入，防摸鱼）</option>
+          <option value="false">⏱️ 无摄像头纯计时模式（无需镜头，纯倒计时打卡）</option>
+        </select>
+      </div>
+
+      <div class="setting-item" id="strict-mode-item">
+        <div class="item-header">
+          <span>深蹲判定深度</span>
+          <span class="item-val" id="val-strict-mode">适中 (120°)</span>
+        </div>
+        <select id="select-strict-mode" class="setting-select">
+          <option value="false">适中推荐 (≤ 120°，专为屏幕上方摄像头优化)</option>
+          <option value="true">严格考核 (≤ 110°，适合平视机位与深蹲考核)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 目标受控网站设置 -->
+    <div class="setting-section targets-card">
+      <div class="targets-header-row">
+        <div class="targets-title-wrap">
+          <span class="targets-title">受控目标网站</span>
+          <div class="tooltip-container">
+            <span class="info-circle" tabindex="0" role="button" aria-label="目标网站帮助说明">ⓘ</span>
+            <div class="info-tooltip">
+              只有在实际浏览这些受控网站时才会计时，累计达到上限后将锁屏。
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-toggle-targets" id="btn-toggle-targets">取消全选</button>
+      </div>
+
+      <div class="sns-list" id="sns-list"></div>
+
+      <div class="other-sites-wrap">
+        <div class="other-sites-header">
+          <label class="sns-item other-sites-checkbox-label">
+            <input type="checkbox" id="check-custom-enabled" class="sns-checkbox">
+            <span class="other-sites-label-text">其他网站</span>
+          </label>
+          <span class="other-sites-hint">每行一个，也可以填写网址。</span>
+        </div>
+        <textarea
+          id="textarea-custom-domains"
+          class="custom-domains-textarea"
+          rows="2"
+          spellcheck="false"
+          placeholder="example.com"
+        ></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 全局轻量消息 Toast -->
+  <div class="toast" id="toast-msg"></div>
+
+  <script type="module" src="./popup.js"></script>
+</body>
+</html>

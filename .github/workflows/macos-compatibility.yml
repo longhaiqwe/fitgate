@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['fitgate-macos/**', '.github/workflows/macos-compatibility.yml']
+    paths: ['apps/macos/**', 'packages/**', 'package.json', 'package-lock.json', '.github/workflows/macos-compatibility.yml']
   pull_request:
-    paths: ['fitgate-macos/**', '.github/workflows/macos-compatibility.yml']
+    paths: ['apps/macos/**', 'packages/**', 'package.json', 'package-lock.json', '.github/workflows/macos-compatibility.yml']
 
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: fitgate-macos
+        working-directory: apps/macos
     env:
       FITGATE_ARCH: ${{ matrix.arch }}
       FITGATE_EXPECT_ARCH: ${{ matrix.arch }}
@@ -34,17 +34,18 @@ jobs:
       # Hosted macOS runners cannot initialize an accelerated GPU/WebGL camera path.
       # The full camera/model smoke runs locally; CI explicitly reports this omission.
       FITGATE_SKIP_CAMERA: '1'
-      FITGATE_ARTIFACT_DIR: ${{ github.workspace }}/fitgate-macos/artifacts/ci
+      FITGATE_ARTIFACT_DIR: ${{ github.workspace }}/apps/macos/artifacts/ci
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: fitgate-macos/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Verify native runner architecture
         run: node -e 'require("node:assert/strict").equal(process.arch, process.env.FITGATE_ARCH)'
       - run: npm ci
+        working-directory: .
       - run: npm test
       - run: npm run package
       - name: Exercise the packaged application
@@ -58,6 +59,6 @@ jobs:
         with:
           name: compatibility-${{ matrix.arch }}
           path: |
-            fitgate-macos/artifacts/ci/
-            fitgate-macos/release/compatibility-*.json
+            apps/macos/artifacts/ci/
+            apps/macos/release/compatibility-*.json
           retention-days: 30

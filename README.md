@@ -1,167 +1,67 @@
 # FitGate
 
-FitGate 是一个基于 Chrome Manifest V3 的网页使用时间控制与身体活动伴练扩展。当受控网站的累计使用时间达到设定阈值时，扩展会在网页上方覆盖全屏提示层，要求使用者完成指定场景下的身体活动动作后解除锁定。
+一个仓库，两个独立应用：Chrome 扩展与 macOS 桌面版。两端分别构建、运行和发布，通过 npm workspaces 共享伴练基础模块。
 
-现已提供独立的 **macOS 桌面版**，可统计整台电脑、指定应用或指定网站的使用时间，并通过全屏休息提醒与动作伴练帮助定时活动。支持 Intel 和 Apple Silicon，要求 macOS 13 或以上。
+## 目录
 
-[下载 macOS 安装包](https://github.com/longhaiqwe/fitgate/releases) · [桌面版使用与构建说明](fitgate-macos/README.md) · [兼容性验证](fitgate-macos/COMPATIBILITY.md)
-
----
-
-## 一、安装与加载
-
-### 1. 构建扩展
-克隆本仓库到本地，并在项目根目录下执行依赖安装与打包命令：
-
-```bash
-git clone https://github.com/longhaiqwe/fitgate.git
-cd fitgate
-npm install
-npm run build
+```text
+apps/
+  chrome-extension/   Chrome Manifest V3 扩展
+  macos/              Electron + Swift 桌面应用
+packages/
+  workout-core/       共享逻辑与设计令牌
+docs/                 产品资料、设计记录与图片
+promo/                宣传文稿
 ```
 
-命令执行完成后，项目根目录会生成 `dist/` 文件夹。
+- [Chrome 使用说明](apps/chrome-extension/README.md)
+- [macOS 使用说明](apps/macos/README.md)
+- [macOS 兼容性记录](apps/macos/COMPATIBILITY.md)
+- [公共模块边界](packages/workout-core/README.md)
+- [本次目录迁移验证记录](docs/monorepo-validation.md)
+- [macOS 正式签名与公证流程](apps/macos/docs/releasing.md)
+- [下载 macOS 1.1.7 正式版（已通过 Apple 公证）](https://github.com/longhaiqwe/fitgate/releases/tag/macos-v1.1.7)
 
-### 2. 加载到 Chrome 浏览器
-1. 打开 Chrome 浏览器，在地址栏输入 `chrome://extensions/` 并回车；
-2. 开启右上角的“开发者模式”；
-3. 点击左上角的“加载已解压的扩展程序”；
-4. 选择本项目根目录下的 `dist` 文件夹完成加载。
+## 安装与开发
 
----
+使用 Node.js 22.12+，在仓库根目录统一安装依赖。仅维护根目录的 `package-lock.json`。
 
-## 二、使用流程
-
-### 1. 配置规则参数与受控网站
-
-点击浏览器工具栏中的 FitGate 图标打开面板，点击“规则设置”进入配置页。
-
-#### (1) 规则参数设置
-使用者可以根据自身节奏设置以下四项参数：
-- **累计使用上限**：在受控网站停留的累计时间（分钟），达到该数值后触发页面锁定；
-- **达标动作组数**：每次解锁需要完成的动作组数（1~5 组）；
-- **解锁深蹲目标**：深蹲模式下的单组要求次数（次）；
-- **单侧拉伸目标**：拉伸动作单侧或单次保持的目标时长（秒）。
-
-![规则参数设置](docs/images/01_rules_settings.png)
-
-#### (2) 受控目标网站设置
-在目标网站列表中勾选需要纳入时间统计的站点（如 X、Bilibili、YouTube、微博等）。若需要控制其他网站，勾选“其他网站”并在文本框中按行填入域名（如 `example.com`）。
-
-![受控目标网站设置](docs/images/02_target_sites.png)
-
----
-
-### 2. 选择当前所处场景
-
-返回主界面，根据当前工作环境选择对应的场景分类：
-
-- **坐姿（办公室 · 不可站起）**：5 个动作，完全坐在办公椅上完成，幅度局限于头部与颈部轻缓侧屈与后展；
-- **站立（办公室 · 可站起来）**：包含坐姿动作及 5 个站姿动作，在工位旁站立开展胸背与腰椎拉伸；
-- **居家（居家办公 · 大动作）**：包含工位动作及标准深蹲、开合跳等全身性动作。
-
-在“解锁动作”下拉栏中，默认设置为“智能轮换”，系统将在当前场景的动作库中依次调度动作；也可以手动指定某一个固定动作。
-
-![场景切换与主界面](docs/images/03_scenario_select.png)
-
----
-
-### 3. 日常浏览与超时锁定
-
-配置完成后，正常使用浏览器。当使用者处于受控网站且当前标签页可见并拥有焦点时，插件后台会按秒累加使用时间。
-
-当累计时间达到设定的使用上限时，当前页面会弹出全屏提示层，页面的点击与滚动操作被阻断。
-
-提示层包含两个操作选项：
-- **进入伴练**：打开独立伴练标签页，开始进行动作；
-- **稍后提醒（推迟 5 分钟）**：临时关闭提示层，将锁定状态后延 5 分钟。
-
-![页面锁定提示](docs/images/04_lock_overlay.png)
-
----
-
-### 4. 进入伴练页面完成动作
-
-点击“进入伴练”后，浏览器会新建并切换到独立伴练标签页。
-
-界面左侧显示当前动作的名称、分步说明、正确姿态要点与安全停止准则；右侧为动作交互区域，提供两种运行模式：
-
-![伴练页面](docs/images/05_workout_room.png)
-
-#### 模式 A：摄像头 AI 检测模式（默认）
-使用本地 TensorFlow.js MoveNet 模型实时推算人体 17 个关键骨骼点。所有画面运算均在浏览器本地内存中完成，图像数据不离开本机设备。
-
-- **动作未到位**：骨骼连线显示为蓝色，界面提示调整角度或位置，此时计时器暂停或不计入深蹲次数；
-- **动作到位**：骨骼连线转为绿色，系统开始扣减倒计时或在深蹲完成一个标准周期后计数递增。
-
-| 动作未到位（蓝色） | 动作到位（绿色） |
-| :---: | :---: |
-| ![动作未到位](docs/images/06_pose_not_ready.png) | ![动作到位](docs/images/07_pose_ready.png) |
-
-#### 模式 B：无摄像头纯计时模式
-若设备未配备摄像头，或当前环境不便调用摄像头，可在伴练页右上角将检测模式切换为“无摄像头纯计时模式”。该模式下系统提供节奏音效与倒计时推进，由使用者自主对照左侧图文完成动作。
-
-![无摄像头计时模式](docs/images/08_timer_mode.png)
-
----
-
-### 5. 达成目标与自动解锁
-
-当完成当前动作的设定时长或次数后：
-1. 若设定的动作组数大于 1 组，系统会自动进入下一组动作；
-2. 当所有组数均达标后，系统播放提示音，弹出通关提示；
-3. 后台向所有被锁定的受控网页广播解锁指令，清除遮罩；
-4. 伴练标签页在 2 秒后自动关闭，焦点回到原网页。
-
----
-
-## 三、动作分类列表
-
-系统收录的 12 个分级动作定义如下：
-
-| 场景 | 动作名称 | 动作形式 | 作用部位 |
-| :--- | :--- | :--- | :--- |
-| **办公室 · 坐姿** | 背后交扣侧头 | 双侧轮换，各 30 秒 | 颈肩交界处（上斜方肌） |
-| **办公室 · 坐姿** | 耳朵找肩膀 | 双侧轮换，各 30 秒 | 颈侧（斜角肌） |
-| **办公室 · 坐姿** | 低头看腋窝 | 双侧轮换，各 30 秒 | 颈后侧与肩胛骨上方（肩胛提肌） |
-| **办公室 · 坐姿** | 手按锁骨看斜上方 | 双侧轮换，各 30 秒 | 前颈对角线（胸锁乳突肌） |
-| **办公室 · 坐姿** | 托后脑低头 | 单次保持 30 秒 | 后脑勺下方（枕下肌群） |
-| **办公室 · 站立** | 举手翻掌 | 单次保持 30 秒 | 胸廓与肩关节前侧 |
-| **办公室 · 站立** | 胳膊向后旋 | 单次保持 30 秒 | 上背部（菱形肌、肩胛骨内收） |
-| **办公室 · 站立** | 扶腰后伸 | 循环 8 次（每次 5 秒） | 腰椎后伸与骨盆支撑 |
-| **办公室 · 站立** | 站姿小燕飞 | 循环 8 次（每次 4 秒） | 背部后侧肌群激活 |
-| **办公室 · 站立** | 交叉腿叉腰侧屈 | 双侧轮换，各 25 秒 | 侧腰深层（腰方肌） |
-| **居家办公** | 标准深蹲 | AI 视觉计数，默认 10 次 | 臀部与大腿下肢大肌群 |
-| **居家办公** | 活力开合跳 | AI 视觉计数，默认 15 次 | 全身动作与心率调节 |
-
----
-
-## 四、安全使用边界
-
-1. **温和幅度**：动作以产生轻微牵拉感为限，不应追求大幅度受力。
-2. **轻缓引导**：头部动作中，双手仅用于提供触觉定位与自重引导，不得外力按压头部或扭转颈椎。
-3. **即刻停止**：若在动作过程中出现尖锐疼痛、四肢发麻、眩晕或恶心，表明局部神经或血管受到挤压，须立刻停止该动作。
-4. **病理性限制**：存在急性颈椎间盘突出、急性腰扭伤或脊柱滑脱病史的人群，应遵从临床医嘱，不建议自行尝试大幅度牵拉动作。
-
----
-
-## 五、项目工程与测试
-
-### 1. 技术栈
-- **扩展规范**：Chrome Extensions Manifest V3
-- **构建工具**：Vite 5
-- **视觉模型**：TensorFlow.js + MoveNet Lightning（本地 WebGL 加速）
-- **隔离机制**：Shadow DOM（闭合模式隔离目标页 CSS）
-- **音频系统**：Web Audio API（纯代码合成正弦波音效，无外部音频文件）
-
-### 2. 运行测试
-项目包含 11 个单元测试套件，覆盖几何夹角计算、状态机流转、丢帧容错、平滑滤波与时间解析等逻辑：
-
-```bash
-npm test
+```sh
+npm ci
+npm run dev:chrome      # 扩展页面的开发预览
+npm run dev:macos       # 构建并启动桌面版（需要 macOS 和 Xcode 命令行工具）
 ```
 
-### 3. 本地开发预览
-```bash
-npm run dev
+也可以在安装完成后进入对应的 `apps/` 子目录，使用该工程的 `npm run dev`（Chrome）或 `npm start`（macOS）。两端都依赖同仓库中的公共包，请克隆完整仓库。
+
+## 构建与测试
+
+```sh
+npm test               # 两端与公共包的单元测试
+npm run build:chrome   # apps/chrome-extension/dist
+npm run build:macos    # apps/macos/dist + 原生监测器
+npm run build          # 构建两端，需要 macOS
+npm run smoke:chrome   # Chromium 扩展完整流程、合成摄像头与离线模型检查
+npm run smoke:macos    # 桌面核心流程、合成摄像头与离线模型检查
+npm run smoke:startup  # 冷启动与首次交互检查
+npm run package:macos  # apps/macos/release 下的 .app 和 ZIP
 ```
+
+Chrome 加载：打开 `chrome://extensions/`，启用开发者模式，选择“加载已解压的扩展程序”，指定 `apps/chrome-extension/dist`。Vite 开发预览不包含真实扩展后台，完整功能需加载构建产物。
+
+首次运行 Chrome 冒烟测试前执行 `npx playwright install chromium`；Linux CI 使用 `npx playwright install --with-deps chromium`。测试使用独立临时浏览器配置，不改动日常 Chrome 数据，也不访问真实摄像头。报告和截图位于 `apps/chrome-extension/artifacts/`。
+
+macOS 交叉打包：
+
+```sh
+npm run package:arm64 --workspace=fitgate-macos
+npm run package:x64 --workspace=fitgate-macos
+```
+
+`npm run package:macos` 生成本地开发用的 ad-hoc 包。维护者使用 `npm run release:macos` 执行 Developer ID 正式签名、Apple 公证、附加票据与 Gatekeeper 校验；全部通过后，正式 ZIP 才会写入 `apps/macos/release/notarized/`。详细配置见[发布流程](apps/macos/docs/releasing.md)。从源码运行不需要 Apple 开发者证书或公证凭据。
+
+## 维护约定
+
+两端保留独立版本号和发布节奏。公共包变更需运行两端测试；发布标签建议使用 `chrome-v…` 与 `macos-v…` 区分。平台存储、窗口/权限、页面交互和已经分化的动作识别规则保留在各自应用里。
+
+旧路径迁移：根目录 `src/`、`public/`、`test/`、`dev/`、`scripts/` 移至 `apps/chrome-extension/`；`fitgate-macos/` 移至 `apps/macos/`。历史设计记录中的旧路径仅表示当时的目录结构。
